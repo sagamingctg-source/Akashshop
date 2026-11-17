@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Accounts & Multi-Card Ledger System (CMS)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS for Real Excel (.xlsx) Export & Import -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandRed: '#dc2626',
+                        brandDarkRed: '#b91c1c',
+                        brandLightRed: '#fef2f2',
+                        pureWhite: '#ffffff',
+                        softGray: '#f8fafc'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .print-area { box-shadow: none !important; border: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-softGray text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Top Header -->
+    <header class="bg-pureWhite border-b-2 border-brandRed px-6 py-4 flex flex-wrap justify-between items-center shadow-sm no-print gap-4">
+        <div class="flex items-center space-x-3">
+            <div class="bg-brandRed text-white p-2.5 rounded-xl text-xl shadow-md shadow-red-600/20">
+                <i class="fa-solid fa-cash-register"></i>
+            </div>
+            <div>
+                <h1 id="header-shop-name" class="text-xl font-extrabold tracking-tight text-slate-900">Paris Mobile & Telecom</h1>
+                <p id="header-shop-sub" class="text-xs text-slate-500 font-medium">Multi-Card & Category Wise POS System (Euro €)</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <div class="text-right mr-2 hidden sm:block">
+                <span id="current-date" class="text-xs font-bold text-slate-700 block"></span>
+                <span id="sync-status-badge" class="text-[11px] text-amber-600 font-semibold"><i class="fa-solid fa-circle text-[7px]"></i> Local Mode (Set Cloud URL in Settings)</span>
+            </div>
+            <button onclick="manualCloudPull()" id="btn-sync-now" class="hidden bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2.5 rounded-lg transition shadow-sm flex items-center gap-1.5" title="Load latest data from Google Sheet">
+                <i class="fa-solid fa-cloud-arrow-down text-sm"></i> Sync Load
+            </button>
+            <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2.5 rounded-lg transition shadow-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-file-excel text-sm"></i> Export Excel (.xlsx)
+            </button>
+            <label class="bg-white hover:bg-red-50 text-brandRed border border-brandRed text-xs font-semibold px-3.5 py-2.5 rounded-lg transition cursor-pointer flex items-center gap-1.5">
+                <i class="fa-solid fa-file-import text-sm"></i> Import Excel
+                <input type="file" id="import-excel-file" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
+            </label>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-pureWhite border-r border-slate-200 flex flex-col justify-between no-print p-4">
+            <div>
+                <div class="flex items-center space-x-3 px-3 py-3 mb-4 bg-brandLightRed rounded-xl border border-red-100">
+                    <div id="sidebar-avatar" class="w-10 h-10 rounded-full bg-brandRed text-white flex items-center justify-center font-bold text-sm shadow-sm">SM</div>
+                    <div class="overflow-hidden">
+                        <h3 id="sidebar-owner-name" class="text-sm font-bold text-slate-900 truncate">Store Manager</h3>
+                        <p id="sidebar-owner-role" class="text-[11px] text-brandRed font-medium truncate">Administrator</p>
+                    </div>
+                </div>
+
+                <nav class="space-y-1.5">
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition bg-brandRed text-white shadow-md shadow-red-600/20">
+                        <i class="fa-solid fa-chart-pie w-5"></i><span>Dashboard</span>
+                    </button>
+                    <button onclick="switchTab('sales')" id="btn-sales" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-600 hover:bg-brandLightRed hover:text-brandRed">
+                        <i class="fa-solid fa-cart-shopping w-5"></i><span>Daily Sales & Category</span>
+                    </button>
+                    <button onclick="switchTab('expenses')" id="btn-expenses" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-600 hover:bg-brandLightRed hover:text-brandRed">
+                        <i class="fa-solid fa-wallet w-5"></i><span>Expenses</span>
+                    </button>
+                    <button onclick="switchTab('payables')" id="btn-payables" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-600 hover:bg-brandLightRed hover:text-brandRed">
+                        <i class="fa-solid fa-hand-holding-dollar w-5"></i><span>Payables (পাওনাদার)</span>
+                    </button>
+                    <button onclick="switchTab('receivables')" id="btn-receivables" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-600 hover:bg-brandLightRed hover:text-brandRed">
+                        <i class="fa-solid fa-users w-5"></i><span>Receivables (দেনাদার)</span>
+                    </button>
+                    <button onclick="switchTab('cards')" id="btn-cards" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-600 hover:bg-brandLightRed hover:text-brandRed">
+                        <i class="fa-solid fa-credit-card w-5"></i><span>Cards / Bank Accounts</span>
+                    </button>
+                    <button onclick="switchTab('reports')" id="btn-reports" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-600 hover:bg-brandLightRed hover:text-brandRed">
+                        <i class="fa-solid fa-print w-5"></i><span>Closing & Report</span>
+                    </button>
+                    <button onclick="switchTab('settings')" id="btn-settings" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-600 hover:bg-brandLightRed hover:text-brandRed">
+                        <i class="fa-solid fa-gear w-5"></i><span>Store Settings & Cloud</span>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="pt-4 border-t border-slate-200 text-center">
+                <button onclick="clearAllData()" class="text-xs text-slate-400 hover:text-brandRed font-medium transition"><i class="fa-solid fa-rotate-left"></i> Reset All Data</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-6 md:p-8 bg-softGray">
+
+            <!-- 1. Dashboard Tab -->
+            <section id="tab-dashboard" class="space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center">
+                        <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Live Financial Overview
+                    </h2>
+                    <button onclick="switchTab('cards')" class="text-xs bg-white border border-slate-300 hover:border-brandRed text-slate-700 px-3 py-1.5 rounded-lg font-semibold transition">
+                        <i class="fa-solid fa-credit-card text-brandRed"></i> Manage Cards & Balances
+                    </button>
+                </div>
+                
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-pureWhite p-5 rounded-2xl border border-slate-200 border-t-4 border-t-emerald-500 shadow-sm">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Live Cash in Hand</p>
+                        <h3 id="dash-cash-hand" class="text-2xl font-extrabold text-emerald-600 mt-1">€0.00</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Cash Drawer Balance</p>
+                    </div>
+                    <div class="bg-pureWhite p-5 rounded-2xl border border-slate-200 border-t-4 border-t-blue-600 shadow-sm">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Total Cards Balance</p>
+                        <h3 id="dash-total-cards" class="text-2xl font-extrabold text-blue-600 mt-1">€0.00</h3>
+                        <p id="dash-card-count" class="text-[11px] text-slate-400 mt-1">0 active cards</p>
+                    </div>
+                    <div class="bg-pureWhite p-5 rounded-2xl border border-slate-200 border-t-4 border-t-brandRed shadow-sm">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Total Sales Revenue</p>
+                        <h3 id="dash-total-sales" class="text-2xl font-extrabold text-slate-900 mt-1">€0.00</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">All Categories Combined</p>
+                    </div>
+                    <div class="bg-pureWhite p-5 rounded-2xl border border-slate-200 border-t-4 border-t-amber-500 shadow-sm">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Net Profit</p>
+                        <h3 id="dash-net-profit" class="text-2xl font-extrabold text-amber-600 mt-1">€0.00</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Sales - Cost</p>
+                    </div>
+                </div>
+
+                <!-- Category Wise Sales Breakdown Cards -->
+                <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-base text-slate-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-brandRed"></i> Today's Category-wise Sales Breakdown
+                    </h3>
+                    <div id="category-breakdown-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-base text-slate-900 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-brandRed"></i> Recent Transactions & Cash/Card Movements
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
+                                    <th class="p-2.5">Date</th>
+                                    <th class="p-2.5">Activity / Description</th>
+                                    <th class="p-2.5">Category</th>
+                                    <th class="p-2.5">Payment Method / Card</th>
+                                    <th class="p-2.5 text-right">Amount (€)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dash-activity-body" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Sales Tab -->
+            <section id="tab-sales" class="space-y-6 hidden">
+                <h2 class="text-2xl font-bold text-slate-900 flex items-center">
+                    <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Daily Sales & Category Entry
+                </h2>
+                
+                <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold text-brandRed mb-4 uppercase tracking-wider">New Sale / Service Entry</h3>
+                    <form id="sales-form" onsubmit="addSale(event)" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Item Name / Description</label>
+                            <input type="text" id="sale-item" required placeholder="e.g. iPhone 13 / Display / Recharge" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Category</label>
+                            <select id="sale-category" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                                <option value="Mobile">Mobile Sales</option>
+                                <option value="Servicing">Servicing / Repair</option>
+                                <option value="Recharge">Mobile Recharge</option>
+                                <option value="SIM">SIM Card</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Other">Other Items</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Buying Price (€)</label>
+                            <input type="number" step="0.01" id="sale-cost" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Selling Price (€)</label>
+                            <input type="number" step="0.01" id="sale-price" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Payment Method</label>
+                            <select id="sale-mode" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed" onchange="toggleSaleCardSelect(this.value)">
+                                <option value="Cash">Cash Drawer</option>
+                                <option value="Card">Specific Card / Account</option>
+                            </select>
+                        </div>
+                        <div id="sale-card-container" class="hidden md:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Select Receiving Card</label>
+                            <select id="sale-card-id" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <button type="submit" class="w-full bg-brandRed hover:bg-brandDarkRed text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-md shadow-red-600/20">
+                                <i class="fa-solid fa-plus"></i> Add Sale
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-pureWhite rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-200 font-bold text-slate-800">Sales Records</div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-brandLightRed text-brandRed text-xs uppercase border-b border-red-100">
+                                    <th class="p-3.5">Date & Time</th>
+                                    <th class="p-3.5">Description</th>
+                                    <th class="p-3.5">Category</th>
+                                    <th class="p-3.5">Cost</th>
+                                    <th class="p-3.5">Price</th>
+                                    <th class="p-3.5">Profit</th>
+                                    <th class="p-3.5">Method / Card</th>
+                                    <th class="p-3.5 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sales-table-body" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Expenses Tab -->
+            <section id="tab-expenses" class="space-y-6 hidden">
+                <h2 class="text-2xl font-bold text-slate-900 flex items-center">
+                    <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Store Expenses
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-xs font-bold text-brandRed mb-4 uppercase tracking-wider">Record New Expense</h3>
+                        <form id="expense-form" onsubmit="addExpense(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+                                <input type="date" id="exp-date" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Expense Description</label>
+                                <input type="text" id="exp-reason" required placeholder="e.g. Shop Rent, Electricity, Tea" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Amount (€)</label>
+                                <input type="number" step="0.01" id="exp-amount" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Deduct From</label>
+                                <select id="exp-source" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed" onchange="toggleExpCardSelect(this.value)">
+                                    <option value="Cash">Cash Drawer</option>
+                                    <option value="Card">Specific Card / Account</option>
+                                </select>
+                            </div>
+                            <div id="exp-card-container" class="hidden">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Select Deducting Card</label>
+                                <select id="exp-card-id" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full bg-brandRed hover:bg-brandDarkRed text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-md shadow-red-600/20">Save Expense</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-pureWhite rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-200 font-bold text-slate-800">Expense History</div>
+                        <div class="flex-1 overflow-y-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead>
+                                    <tr class="bg-brandLightRed text-brandRed text-xs uppercase border-b border-red-100">
+                                        <th class="p-3.5">Date</th>
+                                        <th class="p-3.5">Description</th>
+                                        <th class="p-3.5">Amount</th>
+                                        <th class="p-3.5">Source</th>
+                                        <th class="p-3.5 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expense-table-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Payables Ledger (পাওনাদার) -->
+            <section id="tab-payables" class="space-y-6 hidden">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center">
+                        <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Payables Ledger (পাওনাদার / Creditors)
+                    </h2>
+                </div>
+                
+                <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold text-brandRed mb-4 uppercase tracking-wider">Add Person / Creditor</h3>
+                    <form id="payable-person-form" onsubmit="addLedgerPerson(event, 'payable')" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Party Name</label>
+                            <input type="text" id="pay-name" required placeholder="e.g. Rahim / Wholesaler" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Phone / Note</label>
+                            <input type="text" id="pay-note" placeholder="Phone or details" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Opening Date</label>
+                            <input type="date" id="pay-date" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Initial Payable (€)</label>
+                            <input type="number" step="0.01" id="pay-opening" required placeholder="e.g. 500.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <div>
+                            <button type="submit" class="w-full bg-brandRed hover:bg-brandDarkRed text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-md shadow-red-600/20">
+                                <i class="fa-solid fa-user-plus"></i> Add Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-pureWhite rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-200 font-bold text-slate-800">Creditors List (Click "Pay / History" to view full logs)</div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="bg-brandLightRed text-brandRed text-xs uppercase border-b border-red-100">
+                                    <th class="p-3.5">Party Name</th>
+                                    <th class="p-3.5">Note</th>
+                                    <th class="p-3.5">Opening (€)</th>
+                                    <th class="p-3.5">Total Paid (€)</th>
+                                    <th class="p-3.5">Current Balance (€)</th>
+                                    <th class="p-3.5">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payables-table-body" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. Receivables Ledger (দেনাদার) -->
+            <section id="tab-receivables" class="space-y-6 hidden">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center">
+                        <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Receivables Ledger (দেনাদার / Debtors)
+                    </h2>
+                </div>
+                
+                <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold text-brandRed mb-4 uppercase tracking-wider">Add Customer / Debtor</h3>
+                    <form id="receivable-person-form" onsubmit="addLedgerPerson(event, 'receivable')" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Customer Name</label>
+                            <input type="text" id="rec-name" required placeholder="e.g. Karim / Customer" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Phone / Note</label>
+                            <input type="text" id="rec-note" placeholder="Phone or details" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Opening Date</label>
+                            <input type="date" id="rec-date" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Initial Receivable Due (€)</label>
+                            <input type="number" step="0.01" id="rec-opening" required placeholder="e.g. 300.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <div>
+                            <button type="submit" class="w-full bg-brandRed hover:bg-brandDarkRed text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-md shadow-red-600/20">
+                                <i class="fa-solid fa-user-plus"></i> Add Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-pureWhite rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-200 font-bold text-slate-800">Debtors List (Click "Receive / History" to view full logs)</div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="bg-brandLightRed text-brandRed text-xs uppercase border-b border-red-100">
+                                    <th class="p-3.5">Customer Name</th>
+                                    <th class="p-3.5">Note</th>
+                                    <th class="p-3.5">Opening (€)</th>
+                                    <th class="p-3.5">Total Received (€)</th>
+                                    <th class="p-3.5">Current Due (€)</th>
+                                    <th class="p-3.5">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="receivables-table-body" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. Cards & Bank Accounts Tab -->
+            <section id="tab-cards" class="space-y-6 hidden">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center">
+                        <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Cards & Bank Accounts Management
+                    </h2>
+                </div>
+
+                <!-- Add Card Form -->
+                <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm max-w-2xl">
+                    <h3 class="text-xs font-bold text-brandRed mb-4 uppercase tracking-wider">Add New Card / Bank Account</h3>
+                    <form id="card-form" onsubmit="addCard(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Card / Bank Name</label>
+                                <input type="text" id="card-name" required placeholder="e.g. Mastercard Business, Revolut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Card Type / Last 4 Digits</label>
+                                <input type="text" id="card-type" required placeholder="e.g. Visa (*4821)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Initial Opening Balance (€)</label>
+                            <input type="number" step="0.01" id="card-opening" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                        </div>
+                        <button type="submit" class="bg-brandRed hover:bg-brandDarkRed text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-md shadow-red-600/20">
+                            <i class="fa-solid fa-credit-card"></i> Add Card to System
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Cards List Grid -->
+                <div class="bg-pureWhite rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-200 font-bold text-slate-800">All Active Cards & Current Live Balances</div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="bg-brandLightRed text-brandRed text-xs uppercase border-b border-red-100">
+                                    <th class="p-3.5">Card Name</th>
+                                    <th class="p-3.5">Type / Details</th>
+                                    <th class="p-3.5">Opening Balance (€)</th>
+                                    <th class="p-3.5">Current Live Balance (€)</th>
+                                    <th class="p-3.5 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cards-table-body" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. Reports & Print Tab -->
+            <section id="tab-reports" class="space-y-6 hidden">
+                <div class="flex justify-between items-center no-print">
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center">
+                        <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Daily Closing & Category Statement
+                    </h2>
+                    <button onclick="window.print()" class="bg-brandRed hover:bg-brandDarkRed text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition shadow-md shadow-red-600/20">
+                        <i class="fa-solid fa-print"></i> Print A4 Statement
+                    </button>
+                </div>
+
+                <div class="bg-white text-slate-900 p-8 rounded-2xl shadow-lg border border-slate-200 print-area max-w-4xl mx-auto space-y-6">
+                    <div class="text-center border-b-2 border-brandRed pb-4">
+                        <h1 id="print-shop-name" class="text-2xl font-extrabold text-slate-900">Paris Mobile & Telecom</h1>
+                        <p id="print-shop-sub" class="text-sm text-slate-600">Complete Financial & Category Wise Closing Statement</p>
+                        <p id="print-date" class="text-xs text-slate-500 mt-1"></p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-1.5">
+                            <p class="text-slate-600 font-semibold border-b pb-1">Overall Revenue & Profit</p>
+                            <p class="text-slate-600">Total Sales Revenue: <span id="print-total-sales" class="font-bold float-right">€0.00</span></p>
+                            <p class="text-slate-600">Net Profit Earned: <span id="print-net-profit" class="font-bold float-right text-emerald-600">€0.00</span></p>
+                            <p class="text-slate-600">Total Payables (দেনা): <span id="print-payables" class="font-bold float-right text-brandRed">€0.00</span></p>
+                            <p class="text-slate-600">Total Receivables (পাওনা): <span id="print-receivables" class="font-bold float-right text-purple-600">€0.00</span></p>
+                        </div>
+                        <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-1.5">
+                            <p class="text-slate-600 font-semibold border-b pb-1">Cash & Cards Breakdown</p>
+                            <p class="text-slate-600">Live Cash Drawer: <span id="print-drawer-cash" class="font-bold float-right text-emerald-700">€0.00</span></p>
+                            <div id="print-cards-breakdown" class="space-y-1 text-xs text-slate-600 pt-1">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-sm mb-2 border-b pb-1 text-slate-800">Category-wise Sales Summary</h3>
+                        <table class="w-full text-xs text-left border border-slate-200">
+                            <thead>
+                                <tr class="bg-brandLightRed text-brandRed border-b border-slate-200">
+                                    <th class="p-2 border border-slate-200">Category Name</th>
+                                    <th class="p-2 border border-slate-200 text-center">Items Sold</th>
+                                    <th class="p-2 border border-slate-200 text-right">Total Revenue (€)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="print-category-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex justify-between mt-12 pt-8 border-t border-slate-200 text-xs text-slate-600">
+                        <div class="text-center">
+                            <div class="w-36 border-b border-slate-400 mx-auto mb-1"></div>
+                            <p id="print-manager-label">Manager's Signature</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-36 border-b border-slate-400 mx-auto mb-1"></div>
+                            <p>Owner's Signature</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. Store Settings & Cloud Sync Tab -->
+            <section id="tab-settings" class="space-y-6 hidden">
+                <h2 class="text-2xl font-bold text-slate-900 flex items-center">
+                    <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Store Profile, Opening Cash & Google Sheets Sync
+                </h2>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl">
+                    <!-- Store Profile -->
+                    <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-xs font-bold text-brandRed mb-4 uppercase tracking-wider">Store Profile</h3>
+                        <form id="settings-form" onsubmit="saveSettings(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Shop Name</label>
+                                <input type="text" id="set-shop-name" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Tagline / Address</label>
+                                <input type="text" id="set-shop-sub" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Manager Name</label>
+                                    <input type="text" id="set-owner-name" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Role</label>
+                                    <input type="text" id="set-owner-role" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                                </div>
+                            </div>
+                            <button type="submit" class="bg-brandRed hover:bg-brandDarkRed text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-md shadow-red-600/20">
+                                Save Profile
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Opening Cash & Cloud Sync -->
+                    <div class="space-y-6">
+                        <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 class="text-xs font-bold text-blue-600 mb-2 uppercase tracking-wider">Opening Cash in Drawer</h3>
+                            <p class="text-xs text-slate-500 mb-4">Set your starting cash balance when you began using this software.</p>
+                            <form onsubmit="saveOpeningCash(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Opening Cash (€)</label>
+                                    <input type="number" step="0.01" id="set-open-cash" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-600">
+                                </div>
+                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-md shadow-blue-600/20">
+                                    Update Opening Cash
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Google Sheets Live Cloud Sync -->
+                        <div class="bg-pureWhite p-6 rounded-2xl border-2 border-emerald-500/30 shadow-sm">
+                            <h3 class="text-xs font-bold text-emerald-700 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-cloud"></i> Google Sheets Live Sync (Web App URL)
+                            </h3>
+                            <p class="text-xs text-slate-500 mb-3">Paste your Google Apps Script Web App URL below to automatically save all data & full history to Google Sheets.</p>
+                            <form onsubmit="saveCloudUrl(event)" class="space-y-3">
+                                <input type="url" id="set-cloud-url" placeholder="https://script.google.com/macros/s/..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-600">
+                                <div class="flex gap-2">
+                                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2 rounded-xl text-xs transition shadow-sm">
+                                        Connect & Save URL
+                                    </button>
+                                    <button type="button" onclick="manualCloudPull()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-xl text-xs transition">
+                                        Load Data from Sheet
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modal for Party Transaction Statement -->
+    <div id="ledger-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-pureWhite rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-brandRed text-white px-6 py-4 flex justify-between items-center">
+                <div>
+                    <h3 id="modal-party-name" class="text-lg font-bold">Party Name</h3>
+                    <p id="modal-party-type" class="text-xs text-red-100">Date-wise Statement & Settlement History</p>
+                </div>
+                <button onclick="closeLedgerModal()" class="text-white hover:text-red-200 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 flex-1">
+                <div class="grid grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-center">
+                    <div>
+                        <span class="text-[11px] text-slate-500 block">Opening Balance</span>
+                        <strong id="modal-open-bal" class="text-sm text-slate-800">€0.00</strong>
+                    </div>
+                    <div>
+                        <span id="modal-paid-label" class="text-[11px] text-slate-500 block">Total Settled</span>
+                        <strong id="modal-paid-bal" class="text-sm text-emerald-600">€0.00</strong>
+                    </div>
+                    <div>
+                        <span class="text-[11px] text-slate-500 block">Current Balance</span>
+                        <strong id="modal-curr-bal" class="text-base text-brandRed">€0.00</strong>
+                    </div>
+                </div>
+
+                <form id="modal-tx-form" onsubmit="addPartyTransaction(event)" class="bg-brandLightRed/60 p-4 rounded-xl border border-red-100 space-y-3">
+                    <h4 class="text-xs font-bold text-brandRed uppercase">Record Settlement / Payment</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Date</label>
+                            <input type="date" id="tx-date" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-2 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Action Type</label>
+                            <select id="tx-action" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-2 text-xs">
+                                <option value="settle">Payment Settle (-)</option>
+                                <option value="add_due">Add Due (+)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Method / Card</label>
+                            <select id="tx-method" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-2 text-xs" onchange="toggleModalCardSelect(this.value)">
+                                <option value="Cash">Cash Drawer</option>
+                                <option value="Card">Specific Card Account</option>
+                            </select>
+                        </div>
+                        <div id="modal-card-select-wrap" class="hidden">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Select Card</label>
+                            <select id="tx-card-id" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-2 text-xs">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Amount (€)</label>
+                            <input type="number" step="0.01" id="tx-amount" required placeholder="0.00" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-2 text-xs">
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="tx-note" placeholder="Optional note" class="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                        <button type="submit" class="bg-brandRed hover:bg-brandDarkRed text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Save Entry</button>
+                    </div>
+                </form>
+
+                <div>
+                    <h4 class="text-xs font-bold text-slate-700 uppercase mb-2">Complete Transaction History Log</h4>
+                    <table class="w-full text-left text-xs border border-slate-200 rounded-lg overflow-hidden">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                                <th class="p-2.5">Date</th>
+                                <th class="p-2.5">Type</th>
+                                <th class="p-2.5">Method / Card</th>
+                                <th class="p-2.5">Note</th>
+                                <th class="p-2.5 text-right">Amount (€)</th>
+                                <th class="p-2.5 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-tx-body" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete JavaScript Logic with Cloud Sync -->
+    <script>
+        const todayISO = new Date().toISOString().slice(0, 10);
+
+        let db = JSON.parse(localStorage.getItem('red_white_cms_full_v5')) || {
+            settings: {
+                shopName: 'Paris Mobile & Telecom',
+                shopSub: 'Multi-Card & Category Wise POS System (Euro €)',
+                ownerName: 'Store Manager',
+                ownerRole: 'Administrator',
+                openingCash: 0
+            },
+            cards: [
+                { id: 1, name: 'Mastercard Business', type: 'Mastercard', opening: 1000 },
+                { id: 2, name: 'Revolut Pro', type: 'Visa', opening: 500 }
+            ],
+            sales: [],
+            expenses: [],
+            parties: []
+        };
+
+        let activePartyId = null;
+
+        function getCloudUrl() {
+            return localStorage.getItem('cms_google_sheet_url') || '';
+        }
+
+        function updateSyncStatusBadge() {
+            const url = getCloudUrl();
+            const badge = document.getElementById('sync-status-badge');
+            const syncBtn = document.getElementById('btn-sync-now');
+            if (url) {
+                badge.className = "text-[11px] text-emerald-600 font-semibold";
+                badge.innerHTML = '<i class="fa-solid fa-circle text-[7px]"></i> Google Sheets Cloud Sync Active';
+                if(syncBtn) syncBtn.classList.remove('hidden');
+            } else {
+                badge.className = "text-[11px] text-amber-600 font-semibold";
+                badge.innerHTML = '<i class="fa-solid fa-circle text-[7px]"></i> Local Mode (Set Cloud URL in Settings)';
+                if(syncBtn) syncBtn.classList.add('hidden');
+            }
+        }
+
+        function saveCloudUrl(e) {
+            e.preventDefault();
+            const url = document.getElementById('set-cloud-url').value.trim();
+            localStorage.setItem('cms_google_sheet_url', url);
+            updateSyncStatusBadge();
+            if(url) {
+                pushToCloud();
+                alert('Google Sheets URL connected! Data is now syncing automatically.');
+            } else {
+                alert('Cloud URL removed. Switched to Local Mode.');
+            }
+        }
+
+        function pushToCloud() {
+            const url = getCloudUrl();
+            if (!url) return;
+
+            fetch(url, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "saveAll", data: db })
+            }).catch(err => console.error("Cloud Sync Error:", err));
+        }
+
+        function manualCloudPull() {
+            const url = getCloudUrl();
+            if (!url) return alert('Please set your Google Apps Script Web App URL first in Store Settings.');
+
+            const badge = document.getElementById('sync-status-badge');
+            badge.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing from Google Sheets...';
+
+            fetch(url + "?action=getData")
+                .then(res => res.json())
+                .then(cloudData => {
+                    if (cloudData && cloudData.settings && cloudData.settings.shopName) {
+                        db.settings = cloudData.settings;
+                        if (cloudData.cards) db.cards = cloudData.cards.map(c => ({ id: c.ID, name: c.Name, type: c.Type, opening: Number(c.Opening_EUR) || 0 }));
+                        if (cloudData.sales) db.sales = cloudData.sales.map(s => ({
+                            id: s.ID, date: s.Date, time: s.Time, item: s.Item, category: s.Category,
+                            cost: Number(s.Cost_EUR)||0, price: Number(s.Price_EUR)||0, profit: Number(s.Profit_EUR)||0,
+                            mode: s.Method, cardId: s.Card_ID ? Number(s.Card_ID) : null
+                        }));
+                        if (cloudData.expenses) db.expenses = cloudData.expenses.map(ex => ({
+                            id: ex.ID, date: ex.Date, reason: ex.Reason, amount: Number(ex.Amount_EUR)||0,
+                            source: ex.Source, cardId: ex.Card_ID ? Number(ex.Card_ID) : null
+                        }));
+                        if (cloudData.parties) {
+                            db.parties = cloudData.parties.map(p => {
+                                let txs = [];
+                                if (typeof p.Transactions_JSON === 'string' && p.Transactions_JSON) {
+                                    try { txs = JSON.parse(p.Transactions_JSON); } catch(e) { txs = []; }
+                                } else if (Array.isArray(p.Transactions_JSON)) {
+                                    txs = p.Transactions_JSON;
+                                }
+                                return {
+                                    id: p.Party_ID, type: p.Type, name: p.Name, note: p.Note,
+                                    openDate: p.Opening_Date, openingBalance: Number(p.Opening_EUR)||0,
+                                    transactions: txs
+                                };
+                            });
+                        }
+                        localStorage.setItem('red_white_cms_full_v5', JSON.stringify(db));
+                        applySettingsUI();
+                        populateCardDropdowns();
+                        renderSales();
+                        renderExpenses();
+                        renderParties();
+                        renderCards();
+                        updateDashboard();
+                        updateSyncStatusBadge();
+                        alert('Latest data loaded from Google Sheets!');
+                    } else {
+                        updateSyncStatusBadge();
+                        alert('Google Sheet is currently empty. Your local data will be pushed when you make an entry.');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    updateSyncStatusBadge();
+                    alert('Could not fetch data. Check if Web App URL is deployed with "Anyone" access.');
+                });
+        }
+
+        function saveData() {
+            localStorage.setItem('red_white_cms_full_v5', JSON.stringify(db));
+            updateDashboard();
+            applySettingsUI();
+            populateCardDropdowns();
+            pushToCloud();
+        }
+
+        function applySettingsUI() {
+            const s = db.settings;
+            document.getElementById('header-shop-name').innerText = s.shopName;
+            document.getElementById('header-shop-sub').innerText = s.shopSub;
+            document.getElementById('sidebar-owner-name').innerText = s.ownerName;
+            document.getElementById('sidebar-owner-role').innerText = s.ownerRole;
+            document.getElementById('sidebar-avatar').innerText = s.ownerName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+
+            document.getElementById('print-shop-name').innerText = s.shopName;
+            document.getElementById('print-shop-sub').innerText = s.shopSub;
+            document.getElementById('print-manager-label').innerText = s.ownerName + " (" + s.ownerRole + ")";
+
+            document.getElementById('set-shop-name').value = s.shopName;
+            document.getElementById('set-shop-sub').value = s.shopSub;
+            document.getElementById('set-owner-name').value = s.ownerName;
+            document.getElementById('set-owner-role').value = s.ownerRole;
+            document.getElementById('set-open-cash').value = s.openingCash || 0;
+            document.getElementById('set-cloud-url').value = getCloudUrl();
+        }
+
+        function saveSettings(e) {
+            e.preventDefault();
+            db.settings.shopName = document.getElementById('set-shop-name').value;
+            db.settings.shopSub = document.getElementById('set-shop-sub').value;
+            db.settings.ownerName = document.getElementById('set-owner-name').value;
+            db.settings.ownerRole = document.getElementById('set-owner-role').value;
+            saveData();
+            alert('Store profile updated & synced!');
+        }
+
+        function saveOpeningCash(e) {
+            e.preventDefault();
+            db.settings.openingCash = parseFloat(document.getElementById('set-open-cash').value) || 0;
+            saveData();
+            alert('Opening cash updated & synced!');
+        }
+
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('print-date').innerText = "Statement Date: " + new Date().toLocaleDateString();
+        ['exp-date', 'pay-date', 'rec-date', 'tx-date'].forEach(id => {
+            if(document.getElementById(id)) document.getElementById(id).value = todayISO;
+        });
+
+        function switchTab(tabId) {
+            ['dashboard', 'sales', 'expenses', 'payables', 'receivables', 'cards', 'reports', 'settings'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                const btn = document.getElementById('btn-' + t);
+                if(btn) {
+                    btn.classList.remove('bg-brandRed', 'text-white', 'shadow-md', 'shadow-red-600/20');
+                    btn.classList.add('text-slate-600', 'hover:bg-brandLightRed', 'hover:text-brandRed');
+                }
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-brandRed', 'text-white', 'shadow-md', 'shadow-red-600/20');
+                activeBtn.classList.remove('text-slate-600', 'hover:bg-brandLightRed', 'hover:text-brandRed');
+            }
+            if(tabId === 'cards') renderCards();
+            if(tabId === 'reports') generatePrintReport();
+        }
+
+        // Cards Management
+        function addCard(e) {
+            e.preventDefault();
+            const name = document.getElementById('card-name').value;
+            const type = document.getElementById('card-type').value;
+            const opening = parseFloat(document.getElementById('card-opening').value) || 0;
+
+            db.cards.push({ id: Date.now(), name, type, opening });
+            saveData();
+            renderCards();
+            document.getElementById('card-form').reset();
+            alert('Card/Bank account added & synced!');
+        }
+
+        function deleteCard(id) {
+            if(confirm('Delete this card from system?')) {
+                db.cards = db.cards.filter(c => c.id !== id);
+                saveData();
+                renderCards();
+            }
+        }
+
+        function calculateCardBalances() {
+            let balances = {};
+            db.cards.forEach(c => balances[c.id] = Number(c.opening));
+
+            db.sales.forEach(s => {
+                if (s.mode === 'Card' && s.cardId && balances[s.cardId] !== undefined) {
+                    balances[s.cardId] += Number(s.price);
+                }
+            });
+
+            db.expenses.forEach(ex => {
+                if (ex.source === 'Card' && ex.cardId && balances[ex.cardId] !== undefined) {
+                    balances[ex.cardId] -= Number(ex.amount);
+                }
+            });
+
+            db.parties.forEach(p => {
+                if(p.transactions) {
+                    p.transactions.forEach(tx => {
+                        if (tx.method === 'Card' && tx.cardId && balances[tx.cardId] !== undefined) {
+                            const amt = Number(tx.amount);
+                            if (p.type === 'payable' && tx.action === 'settle') balances[tx.cardId] -= amt;
+                            if (p.type === 'receivable' && tx.action === 'settle') balances[tx.cardId] += amt;
+                        }
+                    });
+                }
+            });
+
+            return balances;
+        }
+
+        function renderCards() {
+            const tbody = document.getElementById('cards-table-body');
+            tbody.innerHTML = '';
+            const balances = calculateCardBalances();
+
+            db.cards.forEach(c => {
+                const liveBal = balances[c.id] || 0;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-red-50/30">
+                        <td class="p-3.5 font-bold text-slate-800">${c.name}</td>
+                        <td class="p-3.5 text-slate-500 text-xs">${c.type}</td>
+                        <td class="p-3.5 text-slate-600">€${Number(c.opening).toFixed(2)}</td>
+                        <td class="p-3.5 font-extrabold text-blue-600">€${liveBal.toFixed(2)}</td>
+                        <td class="p-3.5 text-center"><button onclick="deleteCard(${c.id})" class="text-slate-400 hover:text-brandRed"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function populateCardDropdowns() {
+            ['sale-card-id', 'exp-card-id', 'tx-card-id'].forEach(selectId => {
+                const el = document.getElementById(selectId);
+                if (el) {
+                    el.innerHTML = '';
+                    db.cards.forEach(c => {
+                        el.innerHTML += `<option value="${c.id}">${c.name} (${c.type})</option>`;
+                    });
+                }
+            });
+        }
+
+        function toggleSaleCardSelect(val) {
+            document.getElementById('sale-card-container').classList.toggle('hidden', val !== 'Card');
+        }
+
+        function toggleExpCardSelect(val) {
+            document.getElementById('exp-card-container').classList.toggle('hidden', val !== 'Card');
+        }
+
+        function toggleModalCardSelect(val) {
+            document.getElementById('modal-card-select-wrap').classList.toggle('hidden', val !== 'Card');
+        }
+
+        // Sales Logic
+        function addSale(e) {
+            e.preventDefault();
+            const item = document.getElementById('sale-item').value;
+            const category = document.getElementById('sale-category').value;
+            const cost = parseFloat(document.getElementById('sale-cost').value);
+            const price = parseFloat(document.getElementById('sale-price').value);
+            const mode = document.getElementById('sale-mode').value;
+            const cardId = mode === 'Card' ? parseInt(document.getElementById('sale-card-id').value) : null;
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            db.sales.push({ id: Date.now(), date: todayISO, time, item, category, cost, price, profit: price - cost, mode, cardId });
+            saveData();
+            renderSales();
+            document.getElementById('sales-form').reset();
+            document.getElementById('sale-card-container').classList.add('hidden');
+        }
+
+        function deleteSale(id) {
+            db.sales = db.sales.filter(s => s.id !== id);
+            saveData();
+            renderSales();
+        }
+
+        function renderSales() {
+            const tbody = document.getElementById('sales-table-body');
+            tbody.innerHTML = '';
+            db.sales.slice().reverse().forEach(s => {
+                let cardName = '';
+                if(s.mode === 'Card' && s.cardId) {
+                    const foundCard = db.cards.find(c => c.id === s.cardId);
+                    cardName = foundCard ? ` (${foundCard.name})` : '';
+                }
+                tbody.innerHTML += `
+                    <tr class="hover:bg-red-50/30">
+                        <td class="p-3.5 text-slate-500 text-xs">${s.date} ${s.time}</td>
+                        <td class="p-3.5 font-semibold text-slate-800">${s.item}</td>
+                        <td class="p-3.5"><span class="px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700">${s.category}</span></td>
+                        <td class="p-3.5 text-slate-600">€${Number(s.cost).toFixed(2)}</td>
+                        <td class="p-3.5 text-brandRed font-bold">€${Number(s.price).toFixed(2)}</td>
+                        <td class="p-3.5 text-emerald-600 font-bold">+€${Number(s.profit).toFixed(2)}</td>
+                        <td class="p-3.5"><span class="px-2.5 py-1 rounded-md text-xs font-semibold ${s.mode==='Cash'?'bg-emerald-100 text-emerald-800':'bg-blue-100 text-blue-800'}">${s.mode}${cardName}</span></td>
+                        <td class="p-3.5 text-center"><button onclick="deleteSale(${s.id})" class="text-slate-400 hover:text-brandRed"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Expenses Logic
+        function addExpense(e) {
+            e.preventDefault();
+            const date = document.getElementById('exp-date').value;
+            const reason = document.getElementById('exp-reason').value;
+            const amount = parseFloat(document.getElementById('exp-amount').value);
+            const source = document.getElementById('exp-source').value;
+            const cardId = source === 'Card' ? parseInt(document.getElementById('exp-card-id').value) : null;
+
+            db.expenses.push({ id: Date.now(), date, reason, amount, source, cardId });
+            saveData();
+            renderExpenses();
+            document.getElementById('expense-form').reset();
+            document.getElementById('exp-date').value = todayISO;
+            document.getElementById('exp-card-container').classList.add('hidden');
+        }
+
+        function deleteExpense(id) {
+            db.expenses = db.expenses.filter(ex => ex.id !== id);
+            saveData();
+            renderExpenses();
+        }
+
+        function renderExpenses() {
+            const tbody = document.getElementById('expense-table-body');
+            tbody.innerHTML = '';
+            db.expenses.slice().reverse().forEach(ex => {
+                let cardName = '';
+                if(ex.source === 'Card' && ex.cardId) {
+                    const foundCard = db.cards.find(c => c.id === ex.cardId);
+                    cardName = foundCard ? ` (${foundCard.name})` : '';
+                }
+                tbody.innerHTML += `
+                    <tr class="hover:bg-red-50/30">
+                        <td class="p-3.5 text-xs text-slate-500">${ex.date}</td>
+                        <td class="p-3.5 font-medium text-slate-800">${ex.reason}</td>
+                        <td class="p-3.5 text-brandRed font-bold">€${Number(ex.amount).toFixed(2)}</td>
+                        <td class="p-3.5"><span class="text-xs px-2 py-0.5 rounded font-semibold ${ex.source==='Cash'?'bg-emerald-100 text-emerald-800':'bg-blue-100 text-blue-800'}">${ex.source}${cardName}</span></td>
+                        <td class="p-3.5 text-center"><button onclick="deleteExpense(${ex.id})" class="text-slate-400 hover:text-brandRed"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Parties Ledger
+        function addLedgerPerson(e, type) {
+            e.preventDefault();
+            const prefix = type === 'payable' ? 'pay' : 'rec';
+            const name = document.getElementById(`${prefix}-name`).value;
+            const note = document.getElementById(`${prefix}-note`).value;
+            const openDate = document.getElementById(`${prefix}-date`).value;
+            const openingBalance = parseFloat(document.getElementById(`${prefix}-opening`).value) || 0;
+
+            db.parties.push({ id: Date.now(), type, name, note, openDate, openingBalance, transactions: [] });
+            saveData();
+            renderParties();
+            document.getElementById(type === 'payable' ? 'payable-person-form' : 'receivable-person-form').reset();
+            document.getElementById(`${prefix}-date`).value = todayISO;
+        }
+
+        function calculatePartyStats(party) {
+            let settled = 0;
+            let added = 0;
+            if(party.transactions) {
+                party.transactions.forEach(tx => {
+                    if (tx.action === 'settle') settled += Number(tx.amount);
+                    if (tx.action === 'add_due') added += Number(tx.amount);
+                });
+            }
+            const currentBalance = Number(party.openingBalance) + added - settled;
+            return { settled, added, currentBalance };
+        }
+
+        function renderParties() {
+            const payBody = document.getElementById('payables-table-body');
+            const recBody = document.getElementById('receivables-table-body');
+            payBody.innerHTML = '';
+            recBody.innerHTML = '';
+
+            db.parties.forEach(p => {
+                const stats = calculatePartyStats(p);
+                const rowHTML = `
+                    <tr class="hover:bg-red-50/30">
+                        <td class="p-3.5 font-bold text-slate-800">${p.name}<span class="block text-[10px] text-slate-400 font-normal">Since: ${p.openDate}</span></td>
+                        <td class="p-3.5 text-slate-500 text-xs">${p.note || '-'}</td>
+                        <td class="p-3.5 text-slate-600">€${Number(p.openingBalance).toFixed(2)}</td>
+                        <td class="p-3.5 text-emerald-600 font-semibold">€${stats.settled.toFixed(2)}</td>
+                        <td class="p-3.5 font-extrabold ${stats.currentBalance > 0 ? 'text-brandRed' : 'text-emerald-600'}">€${stats.currentBalance.toFixed(2)}</td>
+                        <td class="p-3.5">
+                            <button onclick="openLedgerModal(${p.id})" class="bg-slate-800 hover:bg-brandRed text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+                                <i class="fa-solid fa-pen-to-square"></i> Pay / History
+                            </button>
+                            <button onclick="deleteParty(${p.id})" class="text-slate-400 hover:text-brandRed p-1.5"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+                if (p.type === 'payable') payBody.innerHTML += rowHTML;
+                else recBody.innerHTML += rowHTML;
+            });
+        }
+
+        function deleteParty(id) {
+            if(confirm('Delete account?')) {
+                db.parties = db.parties.filter(p => p.id !== id);
+                saveData();
+                renderParties();
+            }
+        }
+
+        // Modal for Ledger History
+        function openLedgerModal(id) {
+            activePartyId = id;
+            const party = db.parties.find(p => p.id === id);
+            if (!party) return;
+
+            const stats = calculatePartyStats(party);
+            document.getElementById('modal-party-name').innerText = party.name;
+            document.getElementById('modal-party-type').innerText = party.type === 'payable' ? 'Creditor Account (পাওনাদার)' : 'Debtor Account (দেনাদার)';
+            document.getElementById('modal-open-bal').innerText = `€${Number(party.openingBalance).toFixed(2)}`;
+            document.getElementById('modal-paid-bal').innerText = `€${stats.settled.toFixed(2)}`;
+            document.getElementById('modal-curr-bal').innerText = `€${stats.currentBalance.toFixed(2)}`;
+            document.getElementById('tx-date').value = todayISO;
+
+            renderModalTransactions(party);
+            document.getElementById('ledger-modal').classList.remove('hidden');
+            document.getElementById('ledger-modal').classList.add('flex');
+        }
+
+        function closeLedgerModal() {
+            document.getElementById('ledger-modal').classList.add('hidden');
+            document.getElementById('ledger-modal').classList.remove('flex');
+            activePartyId = null;
+        }
+
+        function addPartyTransaction(e) {
+            e.preventDefault();
+            const party = db.parties.find(p => p.id === activePartyId);
+            if (!party) return;
+
+            if(!party.transactions) party.transactions = [];
+
+            const date = document.getElementById('tx-date').value;
+            const action = document.getElementById('tx-action').value;
+            const method = document.getElementById('tx-method').value;
+            const cardId = method === 'Card' ? parseInt(document.getElementById('tx-card-id').value) : null;
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const note = document.getElementById('tx-note').value;
+
+            party.transactions.push({ id: Date.now(), date, action, method, cardId, amount, note });
+            saveData();
+            renderParties();
+            document.getElementById('modal-tx-form').reset();
+            openLedgerModal(activePartyId);
+        }
+
+        function deletePartyTx(txId) {
+            const party = db.parties.find(p => p.id === activePartyId);
+            if (!party) return;
+            if (confirm('Delete transaction?')) {
+                party.transactions = party.transactions.filter(t => t.id !== txId);
+                saveData();
+                renderParties();
+                openLedgerModal(activePartyId);
+            }
+        }
+
+        function renderModalTransactions(party) {
+            const tbody = document.getElementById('modal-tx-body');
+            tbody.innerHTML = '';
+            if(party.transactions) {
+                party.transactions.slice().reverse().forEach(tx => {
+                    let cardName = '';
+                    if(tx.method === 'Card' && tx.cardId) {
+                        const c = db.cards.find(x => x.id === tx.cardId);
+                        cardName = c ? ` (${c.name})` : '';
+                    }
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="p-2.5 text-slate-600">${tx.date}</td>
+                            <td class="p-2.5 font-semibold ${tx.action==='settle'?'text-emerald-600':'text-amber-600'}">${tx.action}</td>
+                            <td class="p-2.5">${tx.method}${cardName}</td>
+                            <td class="p-2.5 text-slate-500">${tx.note || '-'}</td>
+                            <td class="p-2.5 text-right font-bold">€${Number(tx.amount).toFixed(2)}</td>
+                            <td class="p-2.5 text-center"><button onclick="deletePartyTx(${tx.id})" class="text-brandRed hover:underline"><i class="fa-solid fa-trash"></i></button></td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        // Financial Calculation Engine
+        function calculateFinancials() {
+            const openCash = Number(db.settings.openingCash) || 0;
+            let totalSales = 0;
+            let cashSales = 0;
+            let netProfit = 0;
+            let catSales = { Mobile: 0, Servicing: 0, Recharge: 0, SIM: 0, Accessories: 0, Other: 0 };
+            let catCounts = { Mobile: 0, Servicing: 0, Recharge: 0, SIM: 0, Accessories: 0, Other: 0 };
+
+            db.sales.forEach(s => {
+                const p = Number(s.price);
+                totalSales += p;
+                netProfit += Number(s.profit);
+                if (s.mode === 'Cash') cashSales += p;
+                if (catSales[s.category] !== undefined) {
+                    catSales[s.category] += p;
+                    catCounts[s.category] += 1;
+                }
+            });
+
+            let cashExp = 0;
+            db.expenses.forEach(ex => {
+                if (ex.source === 'Cash') cashExp += Number(ex.amount);
+            });
+
+            let totalPayable = 0;
+            let totalReceivable = 0;
+            let partyCashIn = 0;
+            let partyCashOut = 0;
+            const activities = [];
+
+            db.parties.forEach(p => {
+                const stats = calculatePartyStats(p);
+                if (p.type === 'payable') totalPayable += stats.currentBalance;
+                else totalReceivable += stats.currentBalance;
+
+                if(p.transactions) {
+                    p.transactions.forEach(tx => {
+                        const amt = Number(tx.amount);
+                        if (tx.action === 'settle') {
+                            if (p.type === 'payable' && tx.method === 'Cash') partyCashOut += amt;
+                            if (p.type === 'receivable' && tx.method === 'Cash') partyCashIn += amt;
+                            activities.push({ date: tx.date, title: `${p.name} (${p.type})`, type: tx.action, method: tx.method, amount: p.type==='payable'?-amt:+amt });
+                        }
+                    });
+                }
+            });
+
+            db.sales.forEach(s => activities.push({ date: s.date, title: `Sale: ${s.item}`, type: 'Sale', method: s.mode, amount: +Number(s.price) }));
+            db.expenses.forEach(ex => activities.push({ date: ex.date, title: `Exp: ${ex.reason}`, type: 'Expense', method: ex.source, amount: -Number(ex.amount) }));
+
+            const liveCash = openCash + cashSales + partyCashIn - cashExp - partyCashOut;
+            const cardBalances = calculateCardBalances();
+            let totalCardsBal = Object.values(cardBalances).reduce((a, b) => a + b, 0);
+
+            return {
+                liveCash, totalCardsBal, totalSales, netProfit, totalPayable, totalReceivable,
+                catSales, catCounts, cardBalances,
+                activities: activities.reverse().slice(0, 10)
+            };
+        }
+
+        function updateDashboard() {
+            const f = calculateFinancials();
+            document.getElementById('dash-cash-hand').innerText = `€${f.liveCash.toFixed(2)}`;
+            document.getElementById('dash-total-cards').innerText = `€${f.totalCardsBal.toFixed(2)}`;
+            document.getElementById('dash-card-count').innerText = `${db.cards.length} active cards`;
+            document.getElementById('dash-total-sales').innerText = `€${f.totalSales.toFixed(2)}`;
+            document.getElementById('dash-net-profit').innerText = `€${f.netProfit.toFixed(2)}`;
+
+            const grid = document.getElementById('category-breakdown-grid');
+            grid.innerHTML = '';
+            for (let cat in f.catSales) {
+                grid.innerHTML += `
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500 font-semibold block">${cat}</span>
+                        <h4 class="text-base font-extrabold text-slate-800 mt-1">€${f.catSales[cat].toFixed(2)}</h4>
+                        <span class="text-[10px] text-slate-400">${f.catCounts[cat]} items</span>
+                    </div>
+                `;
+            }
+
+            const actBody = document.getElementById('dash-activity-body');
+            actBody.innerHTML = '';
+            f.activities.forEach(a => {
+                actBody.innerHTML += `
+                    <tr>
+                        <td class="p-2.5 text-slate-500">${a.date}</td>
+                        <td class="p-2.5 font-semibold text-slate-800">${a.title}</td>
+                        <td class="p-2.5 text-slate-500">${a.type}</td>
+                        <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-slate-100 font-medium">${a.method}</span></td>
+                        <td class="p-2.5 text-right font-bold ${a.amount >= 0 ? 'text-emerald-600' : 'text-brandRed'}">${a.amount >= 0 ? '+' : ''}€${a.amount.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function generatePrintReport() {
+            const f = calculateFinancials();
+            document.getElementById('print-total-sales').innerText = `€${f.totalSales.toFixed(2)}`;
+            document.getElementById('print-net-profit').innerText = `€${f.netProfit.toFixed(2)}`;
+            document.getElementById('print-payables').innerText = `€${f.totalPayable.toFixed(2)}`;
+            document.getElementById('print-receivables').innerText = `€${f.totalReceivable.toFixed(2)}`;
+            document.getElementById('print-drawer-cash').innerText = `€${f.liveCash.toFixed(2)}`;
+
+            const cardBreakdownEl = document.getElementById('print-cards-breakdown');
+            cardBreakdownEl.innerHTML = '';
+            db.cards.forEach(c => {
+                cardBreakdownEl.innerHTML += `<p>${c.name}: <span class="font-bold float-right text-blue-700">€${(f.cardBalances[c.id]||0).toFixed(2)}</span></p>`;
+            });
+
+            const catBody = document.getElementById('print-category-body');
+            catBody.innerHTML = '';
+            for (let cat in f.catSales) {
+                catBody.innerHTML += `
+                    <tr>
+                        <td class="p-2 border border-slate-200 font-semibold">${cat}</td>
+                        <td class="p-2 border border-slate-200 text-center">${f.catCounts[cat]}</td>
+                        <td class="p-2 border border-slate-200 text-right font-bold">€${f.catSales[cat].toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Excel Export (Packs full transactions history as JSON string in Parties tab)
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+
+            const cardsData = db.cards.length > 0 ? db.cards.map(c => ({ ID: c.id, Name: c.name, Type: c.type, Opening_EUR: c.opening })) : [{ ID: '', Name: '', Type: '', Opening_EUR: 0 }];
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cardsData), "Cards");
+
+            const salesData = db.sales.length > 0 ? db.sales.map(s => ({
+                ID: s.id, Date: s.date, Time: s.time, Item: s.item, Category: s.category,
+                Cost_EUR: s.cost, Price_EUR: s.price, Profit_EUR: s.profit, Method: s.mode, Card_ID: s.cardId || ''
+            })) : [{ ID: '', Date: '', Time: '', Item: '', Category: '', Cost_EUR: 0, Price_EUR: 0, Profit_EUR: 0, Method: '', Card_ID: '' }];
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesData), "Sales");
+
+            const expData = db.expenses.length > 0 ? db.expenses.map(ex => ({
+                ID: ex.id, Date: ex.date, Reason: ex.reason, Amount_EUR: ex.amount, Source: ex.source, Card_ID: ex.cardId || ''
+            })) : [{ ID: '', Date: '', Reason: '', Amount_EUR: 0, Source: '', Card_ID: '' }];
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expData), "Expenses");
+
+            const partiesData = db.parties.length > 0 ? db.parties.map(p => {
+                const stats = calculatePartyStats(p);
+                return {
+                    Party_ID: p.id,
+                    Type: p.type,
+                    Name: p.name,
+                    Note: p.note,
+                    Opening_Date: p.openDate,
+                    Opening_EUR: p.openingBalance,
+                    Current_Balance_EUR: stats.currentBalance,
+                    Transactions_JSON: JSON.stringify(p.transactions || [])
+                };
+            }) : [{ Party_ID: '', Type: '', Name: '', Note: '', Opening_Date: '', Opening_EUR: 0, Current_Balance_EUR: 0, Transactions_JSON: '[]' }];
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(partiesData), "Parties_Summary");
+
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([db.settings]), "Settings");
+
+            const fileName = `${db.settings.shopName.replace(/[^a-z0-9]/gi, '_')}_FullHistory_Accounts_${todayISO}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // Excel Import (Restores full history JSON for parties)
+        function importFromExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    if (workbook.Sheets["Cards"]) {
+                        db.cards = XLSX.utils.sheet_to_json(workbook.Sheets["Cards"]).filter(r => r.Name).map(r => ({
+                            id: r.ID || Date.now(), name: r.Name, type: r.Type || 'Card', opening: parseFloat(r.Opening_EUR) || 0
+                        }));
+                    }
+                    if (workbook.Sheets["Sales"]) {
+                        db.sales = XLSX.utils.sheet_to_json(workbook.Sheets["Sales"]).filter(r => r.Item).map((r, i) => ({
+                            id: r.ID || Date.now() + i, date: r.Date || todayISO, time: r.Time || '12:00',
+                            item: r.Item, category: r.Category || 'Other', cost: parseFloat(r.Cost_EUR) || 0,
+                            price: parseFloat(r.Price_EUR) || 0, profit: parseFloat(r.Profit_EUR) || 0,
+                            mode: r.Method || 'Cash', cardId: r.Card_ID ? parseInt(r.Card_ID) : null
+                        }));
+                    }
+                    if (workbook.Sheets["Expenses"]) {
+                        db.expenses = XLSX.utils.sheet_to_json(workbook.Sheets["Expenses"]).filter(r => r.Reason).map((r, i) => ({
+                            id: r.ID || Date.now() + i, date: r.Date || todayISO, reason: r.Reason,
+                            amount: parseFloat(r.Amount_EUR) || 0, source: r.Source || 'Cash', cardId: r.Card_ID ? parseInt(r.Card_ID) : null
+                        }));
+                    }
+                    if (workbook.Sheets["Parties_Summary"]) {
+                        db.parties = XLSX.utils.sheet_to_json(workbook.Sheets["Parties_Summary"]).filter(r => r.Name).map((r, i) => {
+                            let txs = [];
+                            try {
+                                if (r.Transactions_JSON) txs = JSON.parse(r.Transactions_JSON);
+                            } catch(err) { txs = []; }
+                            return {
+                                id: r.Party_ID || Date.now() + i,
+                                type: r.Type || 'payable',
+                                name: r.Name,
+                                note: r.Note || '',
+                                openDate: r.Opening_Date || todayISO,
+                                openingBalance: parseFloat(r.Opening_EUR) || 0,
+                                transactions: txs
+                            };
+                        });
+                    }
+                    if (workbook.Sheets["Settings"]) {
+                        const rawSet = XLSX.utils.sheet_to_json(workbook.Sheets["Settings"]);
+                        if (rawSet.length > 0 && rawSet[0].shopName) db.settings = rawSet[0];
+                    }
+
+                    saveData();
+                    renderSales();
+                    renderExpenses();
+                    renderParties();
+                    renderCards();
+                    alert('Full history data imported & synced!');
+                } catch (err) {
+                    console.error(err);
+                    alert('Error reading Excel file.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function clearAllData() {
+            if(confirm('Warning: Erase all data?')) {
+                db.sales = [];
+                db.expenses = [];
+                db.parties = [];
+                db.cards = [];
+                saveData();
+                renderSales();
+                renderExpenses();
+                renderParties();
+                renderCards();
+            }
+        }
+
+        // Initialize App
+        applySettingsUI();
+        updateSyncStatusBadge();
+        populateCardDropdowns();
+        renderSales();
+        renderExpenses();
+        renderParties();
+        renderCards();
+        updateDashboard();
+    </script>
+</body>
+</html>
