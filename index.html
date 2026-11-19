@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html_code = '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -66,7 +66,7 @@
 
     <div class="flex flex-1 overflow-hidden">
         <!-- Sidebar Navigation -->
-        <aside class="w-64 bg-pureWhite border-r border-slate-200 flex flex-col justify-between no-print p-4">
+        <aside class="w-64 bg-pureWhite border-r border-slate-200 flex flex-col justify-between no-print p-4 shrink-0">
             <div>
                 <div class="flex items-center space-x-3 px-3 py-3 mb-4 bg-brandLightRed rounded-xl border border-red-100">
                     <div id="sidebar-avatar" class="w-10 h-10 rounded-full bg-brandRed text-white flex items-center justify-center font-bold text-sm shadow-sm">SM</div>
@@ -96,7 +96,7 @@
                         <i class="fa-solid fa-credit-card w-5"></i><span>Cards / Bank Accounts</span>
                     </button>
                     <button onclick="switchTab('reports')" id="btn-reports" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-600 hover:bg-brandLightRed hover:text-brandRed">
-                        <i class="fa-solid fa-print w-5"></i><span>Closing & Report</span>
+                        <i class="fa-solid fa-print w-5"></i><span>Daily & Monthly Report</span>
                     </button>
                     <button onclick="switchTab('settings')" id="btn-settings" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-600 hover:bg-brandLightRed hover:text-brandRed">
                         <i class="fa-solid fa-gear w-5"></i><span>Store Settings</span>
@@ -141,18 +141,18 @@
                         <p class="text-[11px] text-slate-400 mt-1">All Categories Combined</p>
                     </div>
                     <div class="bg-pureWhite p-5 rounded-2xl border border-slate-200 border-t-4 border-t-amber-500 shadow-sm">
-                        <p class="text-xs text-slate-500 font-bold uppercase">Net Profit</p>
+                        <p class="text-xs text-slate-500 font-bold uppercase">Adjusted Net Profit</p>
                         <h3 id="dash-net-profit" class="text-2xl font-extrabold text-amber-600 mt-1">€0.00</h3>
-                        <p class="text-[11px] text-slate-400 mt-1">Sales - Cost</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Item Profit & Monthly Buying Adj.</p>
                     </div>
                 </div>
 
-                <!-- Category Wise Sales Breakdown Cards -->
+                <!-- Category Wise Sales & Profit Breakdown Cards -->
                 <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm">
                     <h3 class="font-bold text-base text-slate-900 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie text-brandRed"></i> Today's Category-wise Sales Breakdown
+                        <i class="fa-solid fa-chart-pie text-brandRed"></i> Category-wise Sales & Profit Overview
                     </h3>
-                    <div id="category-breakdown-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <div id="category-breakdown-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
                         <!-- Populated by JS -->
                     </div>
                 </div>
@@ -168,7 +168,7 @@
                                 <tr class="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
                                     <th class="p-2.5">Date</th>
                                     <th class="p-2.5">Activity / Description</th>
-                                    <th class="p-2.5">Category</th>
+                                    <th class="p-2.5">Category / Type</th>
                                     <th class="p-2.5">Payment Method / Card</th>
                                     <th class="p-2.5 text-right">Amount (€)</th>
                                 </tr>
@@ -186,11 +186,21 @@
                 </h2>
                 
                 <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 class="text-xs font-bold text-brandRed mb-4 uppercase tracking-wider">New Sale / Service Entry</h3>
+                    <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
+                        <h3 class="text-xs font-bold text-brandRed uppercase tracking-wider">New Sale / Service Entry</h3>
+                        <span class="text-[11px] text-slate-500">Monthly Bulk items skip per-item Buying Price (cost is tracked via Monthly Expenses)</span>
+                    </div>
                     <form id="sales-form" onsubmit="addSale(event)" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Sale Type</label>
+                            <select id="sale-type" onchange="toggleSaleBuyingInput(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:border-brandRed">
+                                <option value="normal">Per-Item Buying (Normal)</option>
+                                <option value="monthly">Monthly Buying (No Cost Here)</option>
+                            </select>
+                        </div>
                         <div class="md:col-span-2">
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Item Name / Description</label>
-                            <input type="text" id="sale-item" required placeholder="e.g. iPhone 13 / Display / Recharge" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                            <input type="text" id="sale-item" required placeholder="e.g. iPhone 13 / Photocopy / Recharge" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Category</label>
@@ -198,12 +208,13 @@
                                 <option value="Mobile">Mobile Sales</option>
                                 <option value="Servicing">Servicing / Repair</option>
                                 <option value="Recharge">Mobile Recharge</option>
+                                <option value="Photocopy">Photocopy</option>
                                 <option value="SIM">SIM Card</option>
                                 <option value="Accessories">Accessories</option>
                                 <option value="Other">Other Items</option>
                             </select>
                         </div>
-                        <div>
+                        <div id="sale-cost-wrapper">
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Buying Price (€)</label>
                             <input type="number" step="0.01" id="sale-cost" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
                         </div>
@@ -241,9 +252,10 @@
                                     <th class="p-3.5">Date & Time</th>
                                     <th class="p-3.5">Description</th>
                                     <th class="p-3.5">Category</th>
-                                    <th class="p-3.5">Cost</th>
-                                    <th class="p-3.5">Price</th>
-                                    <th class="p-3.5">Profit</th>
+                                    <th class="p-3.5">Type</th>
+                                    <th class="p-3.5">Buying Cost</th>
+                                    <th class="p-3.5">Selling Price</th>
+                                    <th class="p-3.5">Item Profit</th>
                                     <th class="p-3.5">Method / Card</th>
                                     <th class="p-3.5 text-center">Action</th>
                                 </tr>
@@ -257,24 +269,48 @@
             <!-- 3. Expenses Tab -->
             <section id="tab-expenses" class="space-y-6 hidden">
                 <h2 class="text-2xl font-bold text-slate-900 flex items-center">
-                    <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Store Expenses
+                    <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Store & Monthly Bulk Expenses
                 </h2>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-pureWhite p-6 rounded-2xl border border-slate-200 shadow-sm">
                         <h3 class="text-xs font-bold text-brandRed mb-4 uppercase tracking-wider">Record New Expense</h3>
                         <form id="expense-form" onsubmit="addExpense(event)" class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
-                                <input type="date" id="exp-date" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+                                    <input type="date" id="exp-date" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Expense Type</label>
+                                    <select id="exp-type" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:border-brandRed">
+                                        <option value="general">General Expense</option>
+                                        <option value="monthly_buying">Monthly Bulk Buying (মাসিক কেনাকাটা)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Category (for Profit Calc)</label>
+                                    <select id="exp-category" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                                        <option value="General">General / All</option>
+                                        <option value="Mobile">Mobile Sales</option>
+                                        <option value="Servicing">Servicing / Repair</option>
+                                        <option value="Recharge">Mobile Recharge</option>
+                                        <option value="Photocopy">Photocopy</option>
+                                        <option value="SIM">SIM Card</option>
+                                        <option value="Accessories">Accessories</option>
+                                        <option value="Other">Other Items</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Amount (€)</label>
+                                    <input type="number" step="0.01" id="exp-amount" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Expense Description</label>
-                                <input type="text" id="exp-reason" required placeholder="e.g. Shop Rent, Electricity, Tea" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Amount (€)</label>
-                                <input type="number" step="0.01" id="exp-amount" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
+                                <input type="text" id="exp-reason" required placeholder="e.g. Monthly Recharge Stock €150, Shop Rent" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brandRed">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Deduct From</label>
@@ -301,6 +337,7 @@
                                     <tr class="bg-brandLightRed text-brandRed text-xs uppercase border-b border-red-100">
                                         <th class="p-3.5">Date</th>
                                         <th class="p-3.5">Description</th>
+                                        <th class="p-3.5">Type & Cat</th>
                                         <th class="p-3.5">Amount</th>
                                         <th class="p-3.5">Source</th>
                                         <th class="p-3.5 text-center">Action</th>
@@ -475,34 +512,44 @@
                 </div>
             </section>
 
-            <!-- 7. Reports & Print Tab -->
+            <!-- 7. Reports & Print Tab (Daily & Monthly) -->
             <section id="tab-reports" class="space-y-6 hidden">
-                <div class="flex justify-between items-center no-print">
+                <div class="flex flex-wrap justify-between items-center gap-4 no-print">
                     <h2 class="text-2xl font-bold text-slate-900 flex items-center">
-                        <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Daily Closing & Category Statement
+                        <span class="w-2 h-6 bg-brandRed rounded-full mr-3"></span> Daily & Monthly Closing Report
                     </h2>
-                    <button onclick="window.print()" class="bg-brandRed hover:bg-brandDarkRed text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition shadow-md shadow-red-600/20">
-                        <i class="fa-solid fa-print"></i> Print A4 Statement
-                    </button>
+                    <div class="flex flex-wrap items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 shadow-xs">
+                        <select id="report-period-type" onchange="toggleReportPeriodInputs(); generatePrintReport();" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700">
+                            <option value="daily">Daily Report (দৈনিক)</option>
+                            <option value="monthly">Monthly Report (মাসিক)</option>
+                        </select>
+                        <input type="date" id="report-date-input" onchange="generatePrintReport()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                        <input type="month" id="report-month-input" onchange="generatePrintReport()" class="hidden bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                        <button onclick="window.print()" class="bg-brandRed hover:bg-brandDarkRed text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition shadow-sm">
+                            <i class="fa-solid fa-print"></i> Print Statement
+                        </button>
+                    </div>
                 </div>
 
-                <div class="bg-white text-slate-900 p-8 rounded-2xl shadow-lg border border-slate-200 print-area max-w-4xl mx-auto space-y-6">
+                <div class="bg-white text-slate-900 p-8 rounded-2xl shadow-lg border border-slate-200 print-area max-w-5xl mx-auto space-y-6">
                     <div class="text-center border-b-2 border-brandRed pb-4">
                         <h1 id="print-shop-name" class="text-2xl font-extrabold text-slate-900">Paris Mobile & Telecom</h1>
                         <p id="print-shop-sub" class="text-sm text-slate-600">Complete Financial & Category Wise Closing Statement</p>
-                        <p id="print-date" class="text-xs text-slate-500 mt-1"></p>
+                        <p id="print-date" class="text-xs font-bold text-brandRed mt-1"></p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-1.5">
-                            <p class="text-slate-600 font-semibold border-b pb-1">Overall Revenue & Profit</p>
-                            <p class="text-slate-600">Total Sales Revenue: <span id="print-total-sales" class="font-bold float-right">€0.00</span></p>
-                            <p class="text-slate-600">Net Profit Earned: <span id="print-net-profit" class="font-bold float-right text-emerald-600">€0.00</span></p>
-                            <p class="text-slate-600">Total Payables (দেনা): <span id="print-payables" class="font-bold float-right text-brandRed">€0.00</span></p>
-                            <p class="text-slate-600">Total Receivables (পাওনা): <span id="print-receivables" class="font-bold float-right text-purple-600">€0.00</span></p>
+                            <p class="text-slate-700 font-bold border-b pb-1">Period Sales, Expenses & Profit</p>
+                            <p class="text-slate-600">Period Sales Revenue: <span id="print-total-sales" class="font-bold float-right">€0.00</span></p>
+                            <p class="text-slate-600">Monthly Bulk Buying Exp: <span id="print-monthly-buying-exp" class="font-bold float-right text-amber-700">€0.00</span></p>
+                            <p class="text-slate-600">General Expenses: <span id="print-general-exp" class="font-bold float-right text-brandRed">€0.00</span></p>
+                            <p class="text-slate-600">Adjusted Net Profit: <span id="print-net-profit" class="font-bold float-right text-emerald-600">€0.00</span></p>
+                            <p class="text-slate-600 border-t pt-1">Total Payables (পাওনাদার): <span id="print-payables" class="font-bold float-right text-brandRed">€0.00</span></p>
+                            <p class="text-slate-600">Total Receivables (দেনাদার): <span id="print-receivables" class="font-bold float-right text-purple-600">€0.00</span></p>
                         </div>
                         <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-1.5">
-                            <p class="text-slate-600 font-semibold border-b pb-1">Cash & Cards Breakdown</p>
+                            <p class="text-slate-700 font-bold border-b pb-1">Live Cash & Cards Breakdown</p>
                             <p class="text-slate-600">Live Cash Drawer: <span id="print-drawer-cash" class="font-bold float-right text-emerald-700">€0.00</span></p>
                             <div id="print-cards-breakdown" class="space-y-1 text-xs text-slate-600 pt-1">
                                 <!-- Populated by JS -->
@@ -511,13 +558,15 @@
                     </div>
 
                     <div>
-                        <h3 class="font-bold text-sm mb-2 border-b pb-1 text-slate-800">Category-wise Sales Summary</h3>
+                        <h3 class="font-bold text-sm mb-2 border-b pb-1 text-slate-800">Category-wise Sales & Monthly Buying Profit Summary</h3>
                         <table class="w-full text-xs text-left border border-slate-200">
                             <thead>
                                 <tr class="bg-brandLightRed text-brandRed border-b border-slate-200">
                                     <th class="p-2 border border-slate-200">Category Name</th>
                                     <th class="p-2 border border-slate-200 text-center">Items Sold</th>
-                                    <th class="p-2 border border-slate-200 text-right">Total Revenue (€)</th>
+                                    <th class="p-2 border border-slate-200 text-right">Sales Revenue (€)</th>
+                                    <th class="p-2 border border-slate-200 text-right">Monthly Buying Exp (€)</th>
+                                    <th class="p-2 border border-slate-200 text-right">Net Profit (€)</th>
                                 </tr>
                             </thead>
                             <tbody id="print-category-body"></tbody>
@@ -593,14 +642,14 @@
     </div>
 
     <!-- Modal for Party Transaction Statement -->
-    <div id="ledger-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+    <div id="ledger-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-pureWhite rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
             <div class="bg-brandRed text-white px-6 py-4 flex justify-between items-center">
                 <div>
                     <h3 id="modal-party-name" class="text-lg font-bold">Party Name</h3>
                     <p id="modal-party-type" class="text-xs text-red-100">Date-wise Statement & Settlement History</p>
                 </div>
-                <button onclick="closeLedgerModal()" class="text-white hover:text-red-200 text-xl"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" onclick="closeLedgerModal()" class="text-white hover:text-red-200 text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <div class="p-6 overflow-y-auto space-y-6 flex-1">
@@ -677,14 +726,15 @@
         </div>
     </div>
 
-    <!-- Complete JavaScript Logic with Pre-Configured Google Apps Script Sync -->
+    <!-- Complete JavaScript Logic -->
     <script>
-        // HARDCODED GOOGLE APPS SCRIPT WEB APP URL (Permanent for Client & Admin)
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzE1ImXifWySP3Lw-dE97cBNHqikBcSmOdeRLzB6LO4xrngwO1aMxq6QB3lMx_B9XotWA/exec";
 
+        const CATEGORIES = ["Mobile", "Servicing", "Recharge", "Photocopy", "SIM", "Accessories", "Other"];
         const todayISO = new Date().toISOString().slice(0, 10);
+        const currentMonthISO = todayISO.slice(0, 7);
 
-        let db = JSON.parse(localStorage.getItem('red_white_cms_full_v6')) || {
+        let db = JSON.parse(localStorage.getItem('red_white_cms_full_v7')) || {
             settings: {
                 shopName: 'Paris Mobile & Telecom',
                 shopSub: 'Multi-Card & Category Wise POS System (Euro €)',
@@ -731,18 +781,21 @@
                 .then(cloudData => {
                     if (cloudData && cloudData.settings && cloudData.settings.shopName) {
                         db.settings = cloudData.settings;
-                        if (cloudData.cards) db.cards = cloudData.cards.map(c => ({ id: c.ID, name: c.Name, type: c.Type, opening: Number(c.Opening_EUR) || 0 }));
-                        if (cloudData.sales) db.sales = cloudData.sales.map(s => ({
-                            id: s.ID, date: s.Date, time: s.Time, item: s.Item, category: s.Category,
+                        if (cloudData.cards) db.cards = cloudData.cards.filter(c => c.Name).map(c => ({ id: Number(c.ID) || Date.now(), name: c.Name, type: c.Type, opening: Number(c.Opening_EUR) || 0 }));
+                        if (cloudData.sales) db.sales = cloudData.sales.filter(s => s.Item).map((s, i) => ({
+                            id: Number(s.ID) || (Date.now() + i), date: String(s.Date || todayISO).slice(0, 10), time: s.Time || '12:00',
+                            item: s.Item, category: s.Category || 'Other',
+                            saleType: s.Sale_Type || 'normal',
                             cost: Number(s.Cost_EUR)||0, price: Number(s.Price_EUR)||0, profit: Number(s.Profit_EUR)||0,
-                            mode: s.Method, cardId: s.Card_ID ? Number(s.Card_ID) : null
+                            mode: s.Method || 'Cash', cardId: s.Card_ID ? Number(s.Card_ID) : null
                         }));
-                        if (cloudData.expenses) db.expenses = cloudData.expenses.map(ex => ({
-                            id: ex.ID, date: ex.Date, reason: ex.Reason, amount: Number(ex.Amount_EUR)||0,
-                            source: ex.Source, cardId: ex.Card_ID ? Number(ex.Card_ID) : null
+                        if (cloudData.expenses) db.expenses = cloudData.expenses.filter(ex => ex.Reason).map((ex, i) => ({
+                            id: Number(ex.ID) || (Date.now() + i), date: String(ex.Date || todayISO).slice(0, 10),
+                            reason: ex.Reason, expType: ex.Exp_Type || 'general', category: ex.Category || 'General',
+                            amount: Number(ex.Amount_EUR)||0, source: ex.Source || 'Cash', cardId: ex.Card_ID ? Number(ex.Card_ID) : null
                         }));
                         if (cloudData.parties) {
-                            db.parties = cloudData.parties.map(p => {
+                            db.parties = cloudData.parties.filter(p => p.Name).map((p, i) => {
                                 let txs = [];
                                 if (typeof p.Transactions_JSON === 'string' && p.Transactions_JSON) {
                                     try { txs = JSON.parse(p.Transactions_JSON); } catch(e) { txs = []; }
@@ -750,13 +803,13 @@
                                     txs = p.Transactions_JSON;
                                 }
                                 return {
-                                    id: p.Party_ID, type: p.Type, name: p.Name, note: p.Note,
-                                    openDate: p.Opening_Date, openingBalance: Number(p.Opening_EUR)||0,
-                                    transactions: txs
+                                    id: Number(p.Party_ID) || (Date.now() + i), type: p.Type || 'payable', name: p.Name, note: p.Note || '',
+                                    openDate: String(p.Opening_Date || todayISO).slice(0, 10), openingBalance: Number(p.Opening_EUR)||0,
+                                    transactions: Array.isArray(txs) ? txs : []
                                 };
                             });
                         }
-                        localStorage.setItem('red_white_cms_full_v6', JSON.stringify(db));
+                        localStorage.setItem('red_white_cms_full_v7', JSON.stringify(db));
                         applySettingsUI();
                         populateCardDropdowns();
                         renderSales();
@@ -778,7 +831,7 @@
         }
 
         function saveData() {
-            localStorage.setItem('red_white_cms_full_v6', JSON.stringify(db));
+            localStorage.setItem('red_white_cms_full_v7', JSON.stringify(db));
             updateDashboard();
             applySettingsUI();
             populateCardDropdowns();
@@ -791,7 +844,7 @@
             document.getElementById('header-shop-sub').innerText = s.shopSub;
             document.getElementById('sidebar-owner-name').innerText = s.ownerName;
             document.getElementById('sidebar-owner-role').innerText = s.ownerRole;
-            document.getElementById('sidebar-avatar').innerText = s.ownerName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+            document.getElementById('sidebar-avatar').innerText = s.ownerName.split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0,2) || 'SM';
 
             document.getElementById('print-shop-name').innerText = s.shopName;
             document.getElementById('print-shop-sub').innerText = s.shopSub;
@@ -822,7 +875,9 @@
         }
 
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        document.getElementById('print-date').innerText = "Statement Date: " + new Date().toLocaleDateString();
+        document.getElementById('report-date-input').value = todayISO;
+        document.getElementById('report-month-input').value = currentMonthISO;
+
         ['exp-date', 'pay-date', 'rec-date', 'tx-date'].forEach(id => {
             if(document.getElementById(id)) document.getElementById(id).value = todayISO;
         });
@@ -846,6 +901,20 @@
             if(tabId === 'reports') generatePrintReport();
         }
 
+        // Sales Buying Price Toggle for Monthly vs Normal
+        function toggleSaleBuyingInput(val) {
+            const costWrap = document.getElementById('sale-cost-wrapper');
+            const costInput = document.getElementById('sale-cost');
+            if (val === 'monthly') {
+                costWrap.classList.add('hidden');
+                costInput.required = false;
+                costInput.value = '';
+            } else {
+                costWrap.classList.remove('hidden');
+                costInput.required = true;
+            }
+        }
+
         // Cards Management
         function addCard(e) {
             e.preventDefault();
@@ -862,7 +931,7 @@
 
         function deleteCard(id) {
             if(confirm('Delete this card from system?')) {
-                db.cards = db.cards.filter(c => c.id !== id);
+                db.cards = db.cards.filter(c => Number(c.id) !== Number(id));
                 saveData();
                 renderCards();
             }
@@ -870,27 +939,27 @@
 
         function calculateCardBalances() {
             let balances = {};
-            db.cards.forEach(c => balances[c.id] = Number(c.opening));
+            db.cards.forEach(c => balances[Number(c.id)] = Number(c.opening));
 
             db.sales.forEach(s => {
-                if (s.mode === 'Card' && s.cardId && balances[s.cardId] !== undefined) {
-                    balances[s.cardId] += Number(s.price);
+                if (s.mode === 'Card' && s.cardId && balances[Number(s.cardId)] !== undefined) {
+                    balances[Number(s.cardId)] += Number(s.price);
                 }
             });
 
             db.expenses.forEach(ex => {
-                if (ex.source === 'Card' && ex.cardId && balances[ex.cardId] !== undefined) {
-                    balances[ex.cardId] -= Number(ex.amount);
+                if (ex.source === 'Card' && ex.cardId && balances[Number(ex.cardId)] !== undefined) {
+                    balances[Number(ex.cardId)] -= Number(ex.amount);
                 }
             });
 
             db.parties.forEach(p => {
                 if(p.transactions) {
                     p.transactions.forEach(tx => {
-                        if (tx.method === 'Card' && tx.cardId && balances[tx.cardId] !== undefined) {
+                        if (tx.method === 'Card' && tx.cardId && balances[Number(tx.cardId)] !== undefined) {
                             const amt = Number(tx.amount);
-                            if (p.type === 'payable' && tx.action === 'settle') balances[tx.cardId] -= amt;
-                            if (p.type === 'receivable' && tx.action === 'settle') balances[tx.cardId] += amt;
+                            if (p.type === 'payable' && tx.action === 'settle') balances[Number(tx.cardId)] -= amt;
+                            if (p.type === 'receivable' && tx.action === 'settle') balances[Number(tx.cardId)] += amt;
                         }
                     });
                 }
@@ -905,7 +974,7 @@
             const balances = calculateCardBalances();
 
             db.cards.forEach(c => {
-                const liveBal = balances[c.id] || 0;
+                const liveBal = balances[Number(c.id)] || 0;
                 tbody.innerHTML += `
                     <tr class="hover:bg-red-50/30">
                         <td class="p-3.5 font-bold text-slate-800">${c.name}</td>
@@ -945,23 +1014,26 @@
         // Sales Logic
         function addSale(e) {
             e.preventDefault();
+            const saleType = document.getElementById('sale-type').value;
             const item = document.getElementById('sale-item').value;
             const category = document.getElementById('sale-category').value;
-            const cost = parseFloat(document.getElementById('sale-cost').value);
-            const price = parseFloat(document.getElementById('sale-price').value);
+            const price = parseFloat(document.getElementById('sale-price').value) || 0;
+            const cost = saleType === 'monthly' ? 0 : (parseFloat(document.getElementById('sale-cost').value) || 0);
+            const profit = saleType === 'monthly' ? price : (price - cost);
             const mode = document.getElementById('sale-mode').value;
             const cardId = mode === 'Card' ? parseInt(document.getElementById('sale-card-id').value) : null;
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            db.sales.push({ id: Date.now(), date: todayISO, time, item, category, cost, price, profit: price - cost, mode, cardId });
+            db.sales.push({ id: Date.now(), date: todayISO, time, item, category, saleType, cost, price, profit, mode, cardId });
             saveData();
             renderSales();
             document.getElementById('sales-form').reset();
+            toggleSaleBuyingInput('normal');
             document.getElementById('sale-card-container').classList.add('hidden');
         }
 
         function deleteSale(id) {
-            db.sales = db.sales.filter(s => s.id !== id);
+            db.sales = db.sales.filter(s => Number(s.id) !== Number(id));
             saveData();
             renderSales();
         }
@@ -972,17 +1044,19 @@
             db.sales.slice().reverse().forEach(s => {
                 let cardName = '';
                 if(s.mode === 'Card' && s.cardId) {
-                    const foundCard = db.cards.find(c => c.id === s.cardId);
+                    const foundCard = db.cards.find(c => Number(c.id) === Number(s.cardId));
                     cardName = foundCard ? ` (${foundCard.name})` : '';
                 }
+                const isMonthly = s.saleType === 'monthly';
                 tbody.innerHTML += `
                     <tr class="hover:bg-red-50/30">
                         <td class="p-3.5 text-slate-500 text-xs">${s.date} ${s.time}</td>
                         <td class="p-3.5 font-semibold text-slate-800">${s.item}</td>
                         <td class="p-3.5"><span class="px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700">${s.category}</span></td>
-                        <td class="p-3.5 text-slate-600">€${Number(s.cost).toFixed(2)}</td>
+                        <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[11px] font-semibold ${isMonthly ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">${isMonthly ? 'Monthly' : 'Per-Item'}</span></td>
+                        <td class="p-3.5 text-slate-600">${isMonthly ? '<span class="text-xs text-amber-700">Via Monthly Exp</span>' : '€' + Number(s.cost).toFixed(2)}</td>
                         <td class="p-3.5 text-brandRed font-bold">€${Number(s.price).toFixed(2)}</td>
-                        <td class="p-3.5 text-emerald-600 font-bold">+€${Number(s.profit).toFixed(2)}</td>
+                        <td class="p-3.5 text-emerald-600 font-bold">${isMonthly ? '<span class="text-xs text-slate-500">Monthly Adj.</span>' : '+€' + Number(s.profit).toFixed(2)}</td>
                         <td class="p-3.5"><span class="px-2.5 py-1 rounded-md text-xs font-semibold ${s.mode==='Cash'?'bg-emerald-100 text-emerald-800':'bg-blue-100 text-blue-800'}">${s.mode}${cardName}</span></td>
                         <td class="p-3.5 text-center"><button onclick="deleteSale(${s.id})" class="text-slate-400 hover:text-brandRed"><i class="fa-solid fa-trash"></i></button></td>
                     </tr>
@@ -994,12 +1068,14 @@
         function addExpense(e) {
             e.preventDefault();
             const date = document.getElementById('exp-date').value;
+            const expType = document.getElementById('exp-type').value;
+            const category = document.getElementById('exp-category').value;
             const reason = document.getElementById('exp-reason').value;
-            const amount = parseFloat(document.getElementById('exp-amount').value);
+            const amount = parseFloat(document.getElementById('exp-amount').value) || 0;
             const source = document.getElementById('exp-source').value;
             const cardId = source === 'Card' ? parseInt(document.getElementById('exp-card-id').value) : null;
 
-            db.expenses.push({ id: Date.now(), date, reason, amount, source, cardId });
+            db.expenses.push({ id: Date.now(), date, expType, category, reason, amount, source, cardId });
             saveData();
             renderExpenses();
             document.getElementById('expense-form').reset();
@@ -1008,7 +1084,7 @@
         }
 
         function deleteExpense(id) {
-            db.expenses = db.expenses.filter(ex => ex.id !== id);
+            db.expenses = db.expenses.filter(ex => Number(ex.id) !== Number(id));
             saveData();
             renderExpenses();
         }
@@ -1019,13 +1095,18 @@
             db.expenses.slice().reverse().forEach(ex => {
                 let cardName = '';
                 if(ex.source === 'Card' && ex.cardId) {
-                    const foundCard = db.cards.find(c => c.id === ex.cardId);
+                    const foundCard = db.cards.find(c => Number(c.id) === Number(ex.cardId));
                     cardName = foundCard ? ` (${foundCard.name})` : '';
                 }
+                const isMonthly = ex.expType === 'monthly_buying';
                 tbody.innerHTML += `
                     <tr class="hover:bg-red-50/30">
                         <td class="p-3.5 text-xs text-slate-500">${ex.date}</td>
                         <td class="p-3.5 font-medium text-slate-800">${ex.reason}</td>
+                        <td class="p-3.5 text-xs">
+                            <span class="px-2 py-0.5 rounded font-semibold ${isMonthly ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">${isMonthly ? 'Monthly Buying' : 'General'}</span>
+                            <span class="block text-[11px] text-slate-400 mt-0.5">Cat: ${ex.category || 'General'}</span>
+                        </td>
                         <td class="p-3.5 text-brandRed font-bold">€${Number(ex.amount).toFixed(2)}</td>
                         <td class="p-3.5"><span class="text-xs px-2 py-0.5 rounded font-semibold ${ex.source==='Cash'?'bg-emerald-100 text-emerald-800':'bg-blue-100 text-blue-800'}">${ex.source}${cardName}</span></td>
                         <td class="p-3.5 text-center"><button onclick="deleteExpense(${ex.id})" class="text-slate-400 hover:text-brandRed"><i class="fa-solid fa-trash"></i></button></td>
@@ -1053,13 +1134,13 @@
         function calculatePartyStats(party) {
             let settled = 0;
             let added = 0;
-            if(party.transactions) {
+            if(Array.isArray(party.transactions)) {
                 party.transactions.forEach(tx => {
-                    if (tx.action === 'settle') settled += Number(tx.amount);
-                    if (tx.action === 'add_due') added += Number(tx.amount);
+                    if (tx.action === 'settle') settled += Number(tx.amount) || 0;
+                    if (tx.action === 'add_due') added += Number(tx.amount) || 0;
                 });
             }
-            const currentBalance = Number(party.openingBalance) + added - settled;
+            const currentBalance = (Number(party.openingBalance) || 0) + added - settled;
             return { settled, added, currentBalance };
         }
 
@@ -1073,16 +1154,16 @@
                 const stats = calculatePartyStats(p);
                 const rowHTML = `
                     <tr class="hover:bg-red-50/30">
-                        <td class="p-3.5 font-bold text-slate-800">${p.name}<span class="block text-[10px] text-slate-400 font-normal">Since: ${p.openDate}</span></td>
+                        <td class="p-3.5 font-bold text-slate-800">${p.name}<span class="block text-[10px] text-slate-400 font-normal">Since: ${p.openDate || '-'}</span></td>
                         <td class="p-3.5 text-slate-500 text-xs">${p.note || '-'}</td>
-                        <td class="p-3.5 text-slate-600">€${Number(p.openingBalance).toFixed(2)}</td>
+                        <td class="p-3.5 text-slate-600">€${Number(p.openingBalance || 0).toFixed(2)}</td>
                         <td class="p-3.5 text-emerald-600 font-semibold">€${stats.settled.toFixed(2)}</td>
                         <td class="p-3.5 font-extrabold ${stats.currentBalance > 0 ? 'text-brandRed' : 'text-emerald-600'}">€${stats.currentBalance.toFixed(2)}</td>
                         <td class="p-3.5">
-                            <button onclick="openLedgerModal(${p.id})" class="bg-slate-800 hover:bg-brandRed text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+                            <button type="button" onclick="openLedgerModal(${p.id})" class="bg-slate-800 hover:bg-brandRed text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition">
                                 <i class="fa-solid fa-pen-to-square"></i> Pay / History
                             </button>
-                            <button onclick="deleteParty(${p.id})" class="text-slate-400 hover:text-brandRed p-1.5"><i class="fa-solid fa-trash"></i></button>
+                            <button type="button" onclick="deleteParty(${p.id})" class="text-slate-400 hover:text-brandRed p-1.5"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
@@ -1093,7 +1174,7 @@
 
         function deleteParty(id) {
             if(confirm('Delete account?')) {
-                db.parties = db.parties.filter(p => p.id !== id);
+                db.parties = db.parties.filter(p => Number(p.id) !== Number(id));
                 saveData();
                 renderParties();
             }
@@ -1101,55 +1182,62 @@
 
         // Modal for Ledger History
         function openLedgerModal(id) {
-            activePartyId = id;
-            const party = db.parties.find(p => p.id === id);
-            if (!party) return;
+            activePartyId = Number(id);
+            const party = db.parties.find(p => Number(p.id) === activePartyId);
+            if (!party) {
+                alert('Account record not found. Please refresh.');
+                return;
+            }
+            if (!Array.isArray(party.transactions)) party.transactions = [];
 
             const stats = calculatePartyStats(party);
             document.getElementById('modal-party-name').innerText = party.name;
             document.getElementById('modal-party-type').innerText = party.type === 'payable' ? 'Creditor Account (পাওনাদার)' : 'Debtor Account (দেনাদার)';
-            document.getElementById('modal-open-bal').innerText = `€${Number(party.openingBalance).toFixed(2)}`;
+            document.getElementById('modal-open-bal').innerText = `€${Number(party.openingBalance || 0).toFixed(2)}`;
             document.getElementById('modal-paid-bal').innerText = `€${stats.settled.toFixed(2)}`;
             document.getElementById('modal-curr-bal').innerText = `€${stats.currentBalance.toFixed(2)}`;
             document.getElementById('tx-date').value = todayISO;
 
             renderModalTransactions(party);
-            document.getElementById('ledger-modal').classList.remove('hidden');
-            document.getElementById('ledger-modal').classList.add('flex');
+            const modal = document.getElementById('ledger-modal');
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
         }
 
         function closeLedgerModal() {
-            document.getElementById('ledger-modal').classList.add('hidden');
-            document.getElementById('ledger-modal').classList.remove('flex');
+            const modal = document.getElementById('ledger-modal');
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
             activePartyId = null;
         }
 
         function addPartyTransaction(e) {
             e.preventDefault();
-            const party = db.parties.find(p => p.id === activePartyId);
+            const party = db.parties.find(p => Number(p.id) === Number(activePartyId));
             if (!party) return;
 
-            if(!party.transactions) party.transactions = [];
+            if(!Array.isArray(party.transactions)) party.transactions = [];
 
             const date = document.getElementById('tx-date').value;
             const action = document.getElementById('tx-action').value;
             const method = document.getElementById('tx-method').value;
             const cardId = method === 'Card' ? parseInt(document.getElementById('tx-card-id').value) : null;
-            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const amount = parseFloat(document.getElementById('tx-amount').value) || 0;
             const note = document.getElementById('tx-note').value;
 
             party.transactions.push({ id: Date.now(), date, action, method, cardId, amount, note });
             saveData();
             renderParties();
             document.getElementById('modal-tx-form').reset();
+            document.getElementById('modal-card-select-wrap').classList.add('hidden');
             openLedgerModal(activePartyId);
         }
 
         function deletePartyTx(txId) {
-            const party = db.parties.find(p => p.id === activePartyId);
+            const party = db.parties.find(p => Number(p.id) === Number(activePartyId));
             if (!party) return;
             if (confirm('Delete transaction?')) {
-                party.transactions = party.transactions.filter(t => t.id !== txId);
+                party.transactions = (party.transactions || []).filter(t => Number(t.id) !== Number(txId));
                 saveData();
                 renderParties();
                 openLedgerModal(activePartyId);
@@ -1159,11 +1247,11 @@
         function renderModalTransactions(party) {
             const tbody = document.getElementById('modal-tx-body');
             tbody.innerHTML = '';
-            if(party.transactions) {
+            if(Array.isArray(party.transactions) && party.transactions.length > 0) {
                 party.transactions.slice().reverse().forEach(tx => {
                     let cardName = '';
                     if(tx.method === 'Card' && tx.cardId) {
-                        const c = db.cards.find(x => x.id === tx.cardId);
+                        const c = db.cards.find(x => Number(x.id) === Number(tx.cardId));
                         cardName = c ? ` (${c.name})` : '';
                     }
                     tbody.innerHTML += `
@@ -1172,37 +1260,100 @@
                             <td class="p-2.5 font-semibold ${tx.action==='settle'?'text-emerald-600':'text-amber-600'}">${tx.action}</td>
                             <td class="p-2.5">${tx.method}${cardName}</td>
                             <td class="p-2.5 text-slate-500">${tx.note || '-'}</td>
-                            <td class="p-2.5 text-right font-bold">€${Number(tx.amount).toFixed(2)}</td>
-                            <td class="p-2.5 text-center"><button onclick="deletePartyTx(${tx.id})" class="text-brandRed hover:underline"><i class="fa-solid fa-trash"></i></button></td>
+                            <td class="p-2.5 text-right font-bold">€${Number(tx.amount || 0).toFixed(2)}</td>
+                            <td class="p-2.5 text-center"><button type="button" onclick="deletePartyTx(${tx.id})" class="text-brandRed hover:underline"><i class="fa-solid fa-trash"></i></button></td>
                         </tr>
                     `;
                 });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No transactions recorded yet.</td></tr>`;
             }
         }
 
-        // Financial Calculation Engine
+        // Financial Calculation Engine (supports overall & filtered period)
+        function calculatePeriodStats(salesArr, expensesArr) {
+            let totalSales = 0;
+            let normalProfit = 0;
+            let monthlySalesByCat = {};
+            let monthlyBuyingExpByCat = {};
+            let totalMonthlyBuyingExp = 0;
+            let totalGeneralExp = 0;
+
+            let catSales = {};
+            let catCounts = {};
+            CATEGORIES.forEach(c => {
+                catSales[c] = 0;
+                catCounts[c] = 0;
+                monthlySalesByCat[c] = 0;
+                monthlyBuyingExpByCat[c] = 0;
+            });
+
+            salesArr.forEach(s => {
+                const p = Number(s.price) || 0;
+                const cost = Number(s.cost) || 0;
+                const cat = CATEGORIES.includes(s.category) ? s.category : 'Other';
+                totalSales += p;
+                catSales[cat] += p;
+                catCounts[cat] += 1;
+
+                if (s.saleType === 'monthly') {
+                    monthlySalesByCat[cat] += p;
+                } else {
+                    normalProfit += (p - cost);
+                }
+            });
+
+            expensesArr.forEach(ex => {
+                const amt = Number(ex.amount) || 0;
+                if (ex.expType === 'monthly_buying') {
+                    totalMonthlyBuyingExp += amt;
+                    if (ex.category && CATEGORIES.includes(ex.category)) {
+                        monthlyBuyingExpByCat[ex.category] += amt;
+                    }
+                } else {
+                    totalGeneralExp += amt;
+                }
+            });
+
+            // Per category profit: normal sales profit + (monthly sales in category - monthly buying expense in category)
+            let catProfit = {};
+            CATEGORIES.forEach(c => {
+                let cNormalProfit = 0;
+                salesArr.forEach(s => {
+                    const sCat = CATEGORIES.includes(s.category) ? s.category : 'Other';
+                    if (sCat === c && s.saleType !== 'monthly') {
+                        cNormalProfit += ((Number(s.price) || 0) - (Number(s.cost) || 0));
+                    }
+                });
+                catProfit[c] = cNormalProfit + (monthlySalesByCat[c] - monthlyBuyingExpByCat[c]);
+            });
+
+            // Adjusted net profit: normal item profit + total monthly sales - total monthly buying expenses
+            let totalMonthlySales = Object.values(monthlySalesByCat).reduce((a, b) => a + b, 0);
+            let adjustedNetProfit = normalProfit + totalMonthlySales - totalMonthlyBuyingExp;
+
+            return {
+                totalSales,
+                totalMonthlyBuyingExp,
+                totalGeneralExp,
+                adjustedNetProfit,
+                catSales,
+                catCounts,
+                monthlyBuyingExpByCat,
+                catProfit
+            };
+        }
+
         function calculateFinancials() {
             const openCash = Number(db.settings.openingCash) || 0;
-            let totalSales = 0;
             let cashSales = 0;
-            let netProfit = 0;
-            let catSales = { Mobile: 0, Servicing: 0, Recharge: 0, SIM: 0, Accessories: 0, Other: 0 };
-            let catCounts = { Mobile: 0, Servicing: 0, Recharge: 0, SIM: 0, Accessories: 0, Other: 0 };
-
             db.sales.forEach(s => {
-                const p = Number(s.price);
-                totalSales += p;
-                netProfit += Number(s.profit);
-                if (s.mode === 'Cash') cashSales += p;
-                if (catSales[s.category] !== undefined) {
-                    catSales[s.category] += p;
-                    catCounts[s.category] += 1;
-                }
+                if (s.mode === 'Cash') cashSales += (Number(s.price) || 0);
             });
 
             let cashExp = 0;
             db.expenses.forEach(ex => {
-                if (ex.source === 'Cash') cashExp += Number(ex.amount);
+                if (ex.source === 'Cash') cashExp += (Number(ex.amount) || 0);
             });
 
             let totalPayable = 0;
@@ -1216,9 +1367,9 @@
                 if (p.type === 'payable') totalPayable += stats.currentBalance;
                 else totalReceivable += stats.currentBalance;
 
-                if(p.transactions) {
+                if(Array.isArray(p.transactions)) {
                     p.transactions.forEach(tx => {
-                        const amt = Number(tx.amount);
+                        const amt = Number(tx.amount) || 0;
                         if (tx.action === 'settle') {
                             if (p.type === 'payable' && tx.method === 'Cash') partyCashOut += amt;
                             if (p.type === 'receivable' && tx.method === 'Cash') partyCashIn += amt;
@@ -1228,17 +1379,27 @@
                 }
             });
 
-            db.sales.forEach(s => activities.push({ date: s.date, title: `Sale: ${s.item}`, type: 'Sale', method: s.mode, amount: +Number(s.price) }));
-            db.expenses.forEach(ex => activities.push({ date: ex.date, title: `Exp: ${ex.reason}`, type: 'Expense', method: ex.source, amount: -Number(ex.amount) }));
+            db.sales.forEach(s => activities.push({ date: s.date, title: `Sale: ${s.item}`, type: `${s.category} (${s.saleType === 'monthly' ? 'Monthly' : 'Normal'})`, method: s.mode, amount: +(Number(s.price) || 0) }));
+            db.expenses.forEach(ex => activities.push({ date: ex.date, title: `Exp: ${ex.reason}`, type: ex.expType === 'monthly_buying' ? `Monthly Buying (${ex.category})` : 'Expense', method: ex.source, amount: -(Number(ex.amount) || 0) }));
 
             const liveCash = openCash + cashSales + partyCashIn - cashExp - partyCashOut;
             const cardBalances = calculateCardBalances();
             let totalCardsBal = Object.values(cardBalances).reduce((a, b) => a + b, 0);
 
+            const overall = calculatePeriodStats(db.sales, db.expenses);
+
             return {
-                liveCash, totalCardsBal, totalSales, netProfit, totalPayable, totalReceivable,
-                catSales, catCounts, cardBalances,
-                activities: activities.reverse().slice(0, 10)
+                liveCash,
+                totalCardsBal,
+                totalSales: overall.totalSales,
+                netProfit: overall.adjustedNetProfit,
+                totalPayable,
+                totalReceivable,
+                catSales: overall.catSales,
+                catCounts: overall.catCounts,
+                catProfit: overall.catProfit,
+                cardBalances,
+                activities: activities.reverse().slice(0, 12)
             };
         }
 
@@ -1252,15 +1413,17 @@
 
             const grid = document.getElementById('category-breakdown-grid');
             grid.innerHTML = '';
-            for (let cat in f.catSales) {
+            CATEGORIES.forEach(cat => {
+                const pVal = f.catProfit[cat] || 0;
                 grid.innerHTML += `
                     <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                        <span class="text-xs text-slate-500 font-semibold block">${cat}</span>
-                        <h4 class="text-base font-extrabold text-slate-800 mt-1">€${f.catSales[cat].toFixed(2)}</h4>
-                        <span class="text-[10px] text-slate-400">${f.catCounts[cat]} items</span>
+                        <span class="text-xs text-slate-600 font-bold block">${cat}</span>
+                        <h4 class="text-base font-extrabold text-slate-900 mt-1">€${(f.catSales[cat] || 0).toFixed(2)}</h4>
+                        <span class="text-[11px] font-semibold ${pVal >= 0 ? 'text-emerald-600' : 'text-brandRed'} block mt-0.5">Profit: €${pVal.toFixed(2)}</span>
+                        <span class="text-[10px] text-slate-400">${f.catCounts[cat] || 0} items</span>
                     </div>
                 `;
-            }
+            });
 
             const actBody = document.getElementById('dash-activity-body');
             actBody.innerHTML = '';
@@ -1277,31 +1440,62 @@
             });
         }
 
+        // Daily & Monthly Report Functions
+        function toggleReportPeriodInputs() {
+            const pType = document.getElementById('report-period-type').value;
+            document.getElementById('report-date-input').classList.toggle('hidden', pType !== 'daily');
+            document.getElementById('report-month-input').classList.toggle('hidden', pType !== 'monthly');
+        }
+
         function generatePrintReport() {
-            const f = calculateFinancials();
-            document.getElementById('print-total-sales').innerText = `€${f.totalSales.toFixed(2)}`;
-            document.getElementById('print-net-profit').innerText = `€${f.netProfit.toFixed(2)}`;
-            document.getElementById('print-payables').innerText = `€${f.totalPayable.toFixed(2)}`;
-            document.getElementById('print-receivables').innerText = `€${f.totalReceivable.toFixed(2)}`;
-            document.getElementById('print-drawer-cash').innerText = `€${f.liveCash.toFixed(2)}`;
+            const pType = document.getElementById('report-period-type').value;
+            const selectedDate = document.getElementById('report-date-input').value || todayISO;
+            const selectedMonth = document.getElementById('report-month-input').value || currentMonthISO;
+
+            let filteredSales = [];
+            let filteredExpenses = [];
+
+            if (pType === 'daily') {
+                filteredSales = db.sales.filter(s => s.date === selectedDate);
+                filteredExpenses = db.expenses.filter(ex => ex.date === selectedDate);
+                document.getElementById('print-date').innerText = `DAILY CLOSING STATEMENT — Date: ${selectedDate}`;
+            } else {
+                filteredSales = db.sales.filter(s => String(s.date || '').startsWith(selectedMonth));
+                filteredExpenses = db.expenses.filter(ex => String(ex.date || '').startsWith(selectedMonth));
+                document.getElementById('print-date').innerText = `MONTHLY CLOSING STATEMENT — Month: ${selectedMonth}`;
+            }
+
+            const pStats = calculatePeriodStats(filteredSales, filteredExpenses);
+            const liveFin = calculateFinancials();
+
+            document.getElementById('print-total-sales').innerText = `€${pStats.totalSales.toFixed(2)}`;
+            document.getElementById('print-monthly-buying-exp').innerText = `€${pStats.totalMonthlyBuyingExp.toFixed(2)}`;
+            document.getElementById('print-general-exp').innerText = `€${pStats.totalGeneralExp.toFixed(2)}`;
+            document.getElementById('print-net-profit').innerText = `€${pStats.adjustedNetProfit.toFixed(2)}`;
+            document.getElementById('print-payables').innerText = `€${liveFin.totalPayable.toFixed(2)}`;
+            document.getElementById('print-receivables').innerText = `€${liveFin.totalReceivable.toFixed(2)}`;
+            document.getElementById('print-drawer-cash').innerText = `€${liveFin.liveCash.toFixed(2)}`;
 
             const cardBreakdownEl = document.getElementById('print-cards-breakdown');
             cardBreakdownEl.innerHTML = '';
             db.cards.forEach(c => {
-                cardBreakdownEl.innerHTML += `<p>${c.name}: <span class="font-bold float-right text-blue-700">€${(f.cardBalances[c.id]||0).toFixed(2)}</span></p>`;
+                cardBreakdownEl.innerHTML += `<p>${c.name}: <span class="font-bold float-right text-blue-700">€${(liveFin.cardBalances[Number(c.id)]||0).toFixed(2)}</span></p>`;
             });
 
             const catBody = document.getElementById('print-category-body');
             catBody.innerHTML = '';
-            for (let cat in f.catSales) {
+            CATEGORIES.forEach(cat => {
+                const cProfit = pStats.catProfit[cat] || 0;
                 catBody.innerHTML += `
                     <tr>
                         <td class="p-2 border border-slate-200 font-semibold">${cat}</td>
-                        <td class="p-2 border border-slate-200 text-center">${f.catCounts[cat]}</td>
-                        <td class="p-2 border border-slate-200 text-right font-bold">€${f.catSales[cat].toFixed(2)}</td>
+                        <td class="p-2 border border-slate-200 text-center">${pStats.catCounts[cat] || 0}</td>
+                        <td class="p-2 border border-slate-200 text-right font-bold">€${(pStats.catSales[cat] || 0).toFixed(2)}</td>
+                        <td class="p-2 border border-slate-200 text-right text-amber-700">€${(pStats.monthlyBuyingExpByCat[cat] || 0).toFixed(2)}</td>
+                        <td class="p-2 border border-slate-200 text-right font-bold ${cProfit >= 0 ? 'text-emerald-600' : 'text-brandRed'}">€${cProfit.toFixed(2)}</td>
                     </tr>
                 `;
-            }
+            });
         }
 
         // Excel Export
@@ -1312,14 +1506,15 @@
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cardsData), "Cards");
 
             const salesData = db.sales.length > 0 ? db.sales.map(s => ({
-                ID: s.id, Date: s.date, Time: s.time, Item: s.item, Category: s.category,
+                ID: s.id, Date: s.date, Time: s.time, Item: s.item, Category: s.category, Sale_Type: s.saleType || 'normal',
                 Cost_EUR: s.cost, Price_EUR: s.price, Profit_EUR: s.profit, Method: s.mode, Card_ID: s.cardId || ''
-            })) : [{ ID: '', Date: '', Time: '', Item: '', Category: '', Cost_EUR: 0, Price_EUR: 0, Profit_EUR: 0, Method: '', Card_ID: '' }];
+            })) : [{ ID: '', Date: '', Time: '', Item: '', Category: '', Sale_Type: 'normal', Cost_EUR: 0, Price_EUR: 0, Profit_EUR: 0, Method: '', Card_ID: '' }];
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesData), "Sales");
 
             const expData = db.expenses.length > 0 ? db.expenses.map(ex => ({
-                ID: ex.id, Date: ex.date, Reason: ex.reason, Amount_EUR: ex.amount, Source: ex.source, Card_ID: ex.cardId || ''
-            })) : [{ ID: '', Date: '', Reason: '', Amount_EUR: 0, Source: '', Card_ID: '' }];
+                ID: ex.id, Date: ex.date, Reason: ex.reason, Exp_Type: ex.expType || 'general', Category: ex.category || 'General',
+                Amount_EUR: ex.amount, Source: ex.source, Card_ID: ex.cardId || ''
+            })) : [{ ID: '', Date: '', Reason: '', Exp_Type: 'general', Category: 'General', Amount_EUR: 0, Source: '', Card_ID: '' }];
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expData), "Expenses");
 
             const partiesData = db.parties.length > 0 ? db.parties.map(p => {
@@ -1356,20 +1551,21 @@
 
                     if (workbook.Sheets["Cards"]) {
                         db.cards = XLSX.utils.sheet_to_json(workbook.Sheets["Cards"]).filter(r => r.Name).map(r => ({
-                            id: r.ID || Date.now(), name: r.Name, type: r.Type || 'Card', opening: parseFloat(r.Opening_EUR) || 0
+                            id: Number(r.ID) || Date.now(), name: r.Name, type: r.Type || 'Card', opening: parseFloat(r.Opening_EUR) || 0
                         }));
                     }
                     if (workbook.Sheets["Sales"]) {
                         db.sales = XLSX.utils.sheet_to_json(workbook.Sheets["Sales"]).filter(r => r.Item).map((r, i) => ({
-                            id: r.ID || Date.now() + i, date: r.Date || todayISO, time: r.Time || '12:00',
-                            item: r.Item, category: r.Category || 'Other', cost: parseFloat(r.Cost_EUR) || 0,
-                            price: parseFloat(r.Price_EUR) || 0, profit: parseFloat(r.Profit_EUR) || 0,
+                            id: Number(r.ID) || (Date.now() + i), date: r.Date || todayISO, time: r.Time || '12:00',
+                            item: r.Item, category: r.Category || 'Other', saleType: r.Sale_Type || 'normal',
+                            cost: parseFloat(r.Cost_EUR) || 0, price: parseFloat(r.Price_EUR) || 0, profit: parseFloat(r.Profit_EUR) || 0,
                             mode: r.Method || 'Cash', cardId: r.Card_ID ? parseInt(r.Card_ID) : null
                         }));
                     }
                     if (workbook.Sheets["Expenses"]) {
                         db.expenses = XLSX.utils.sheet_to_json(workbook.Sheets["Expenses"]).filter(r => r.Reason).map((r, i) => ({
-                            id: r.ID || Date.now() + i, date: r.Date || todayISO, reason: r.Reason,
+                            id: Number(r.ID) || (Date.now() + i), date: r.Date || todayISO, reason: r.Reason,
+                            expType: r.Exp_Type || 'general', category: r.Category || 'General',
                             amount: parseFloat(r.Amount_EUR) || 0, source: r.Source || 'Cash', cardId: r.Card_ID ? parseInt(r.Card_ID) : null
                         }));
                     }
@@ -1380,13 +1576,13 @@
                                 if (r.Transactions_JSON) txs = JSON.parse(r.Transactions_JSON);
                             } catch(err) { txs = []; }
                             return {
-                                id: r.Party_ID || Date.now() + i,
+                                id: Number(r.Party_ID) || (Date.now() + i),
                                 type: r.Type || 'payable',
                                 name: r.Name,
                                 note: r.Note || '',
                                 openDate: r.Opening_Date || todayISO,
                                 openingBalance: parseFloat(r.Opening_EUR) || 0,
-                                transactions: txs
+                                transactions: Array.isArray(txs) ? txs : []
                             };
                         });
                     }
@@ -1435,3 +1631,9 @@
     </script>
 </body>
 </html>
+'''
+
+with open("index_updated.html", "w", encoding="utf-8") as f:
+    f.write(html_code)
+
+print("Successfully generated index_updated.html, size:", len(html_code))
